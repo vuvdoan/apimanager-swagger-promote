@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.axway.apim.actions.CreateNewAPI;
 import com.axway.apim.lib.APIPropertyAnnotation;
 import com.axway.apim.lib.AppException;
-import com.axway.apim.lib.CommandParameters;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.swagger.api.state.IAPI;
 
@@ -48,7 +47,7 @@ public class APIChangeState {
 	 * @param desiredAPI - The API loaded from the Swagger + Config
 	 * @throws AppException - Is thrown when something goes wrong.
 	 */
-	public APIChangeState(IAPI actualAPI, IAPI desiredAPI) throws AppException {
+	public APIChangeState(IAPI actualAPI, IAPI desiredAPI, boolean handleNullAsChanges) throws AppException {
 		super();
 		this.actualAPI = actualAPI;
 		this.desiredAPI = desiredAPI;
@@ -56,7 +55,7 @@ public class APIChangeState {
 			LOG.debug("No existing API found. Creating  complete new API");
 			return;
 		}
-		getChanges();
+		getChanges(handleNullAsChanges);
 	}
 	
 	/**
@@ -68,7 +67,7 @@ public class APIChangeState {
 	 * actual API. 
 	 * @throws AppException 
 	 */
-	private void getChanges() throws AppException {
+	private void getChanges(boolean handleNullAsChanges) throws AppException {
 		if(!actualAPI.isValid()) {
 			return; //Nothing to do, as we don't have an existing API
 		}
@@ -81,12 +80,12 @@ public class APIChangeState {
 					Object desiredValue = method.invoke(desiredAPI, null);
 					Object actualValue = method2.invoke(actualAPI, null);
 					if(desiredValue == null && actualValue == null) continue;
-					if(!CommandParameters.getInstance().handleNullAsChange() && desiredValue == null) {
+					if(!handleNullAsChanges && desiredValue == null) {
 						LOG.debug("Ignoring Null-Property: " + field.getName() + "[Desired: '"+desiredValue+"' vs Actual: '"+actualValue+"']");
 						continue; // No change, if nothing is provided!
 					}
 					// desiredValue == null - This can be used to reset/clean a property! (Need to think about this!)
-					if((desiredValue!=null && actualValue==null) || !(compareValues(actualValue, desiredValue))) {
+					if((desiredValue!=null && actualValue==null) || !(compareValues(actualValue, desiredValue, handleNullAsChanges))) {
 						APIPropertyAnnotation property = field.getAnnotation(APIPropertyAnnotation.class);
 						if (property.isBreaking()) {
 							this.isBreaking = true;
@@ -223,9 +222,9 @@ public class APIChangeState {
 		return false;
 	}
 	
-	private static boolean compareValues(Object actualValue, Object desiredValue) {
+	private static boolean compareValues(Object actualValue, Object desiredValue, boolean handleNullAsChanges) {
 		if(actualValue instanceof List) {
-			if(CommandParameters.getInstance().handleNullAsChange() && 
+			if(handleNullAsChanges && 
 					(actualValue!=null && desiredValue==null)) { 
 				return true;
 			} else {

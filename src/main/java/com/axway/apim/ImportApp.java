@@ -161,7 +161,7 @@ public class ImportApp {
 					params.getOptionValue("stage"), params.getOptionValue("apidefinition"), apimAdapter.isUsingOrgAdmin());
 			IAPI desiredAPI = contract.getDesiredAPI();
 			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath()), desiredAPI);
-			APIChangeState changeActions = new APIChangeState(actualAPI, desiredAPI);
+			APIChangeState changeActions = new APIChangeState(actualAPI, desiredAPI, params.handleNullAsChange());
 			apimAdapter.applyChanges(changeActions);
 			LOG.info("Successfully replicated API-State into API-Manager");
 			return 0;

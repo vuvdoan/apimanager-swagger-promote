@@ -43,7 +43,7 @@ public class ChangeStateTest {
 
 		managerAPI.setClientOrganizations(managerOrgs);
 
-		APIChangeState changeState = new APIChangeState(managerAPI, importAPI);
+		APIChangeState changeState = new APIChangeState(managerAPI, importAPI, true);
 		Assert.assertEquals(changeState.hasAnyChanges(), false);
 	}
 
@@ -55,7 +55,7 @@ public class ChangeStateTest {
 		((ActualAPI)importAPI).setVhost("abc.xyz.com");
 		((ActualAPI)managerAPI).setVhost("123.xyz.com");
 
-		APIChangeState changeState = new APIChangeState(managerAPI, importAPI);
+		APIChangeState changeState = new APIChangeState(managerAPI, importAPI, true);
 		Assert.assertEquals(changeState.isBreaking(), true);
 	}
 
