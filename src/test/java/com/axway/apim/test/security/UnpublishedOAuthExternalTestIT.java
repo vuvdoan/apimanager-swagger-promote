@@ -23,7 +23,7 @@ public class UnpublishedOAuthExternalTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/oauth-test-${apiNumber}");
 		variable("apiName", "API OAuth-External Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");

@@ -30,7 +30,7 @@ public class SwaggerFromFileInConfigurationTestIT extends TestNGCitrusTestDesign
 		createVariable(ImportTestAction.API_DEFINITION,  "");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config-with-api-definition.json");
 		createVariable("testAPIDefinition","./src/test/resources/com/axway/apim/test/files/basic/petstore.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
 		
@@ -53,7 +53,7 @@ public class SwaggerFromFileInConfigurationTestIT extends TestNGCitrusTestDesign
 		createVariable(ImportTestAction.API_DEFINITION,  "");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config-with-api-definition.json");
 		createVariable("testAPIDefinition","./src/test/resources/com/axway/apim/test/files/basic/petstore.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "10");
 		action(swaggerImport);
 	}

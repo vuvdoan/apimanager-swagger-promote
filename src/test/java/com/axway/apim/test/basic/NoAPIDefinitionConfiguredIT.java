@@ -26,7 +26,7 @@ public class NoAPIDefinitionConfiguredIT extends TestNGCitrusTestDesigner {
 		echo("####### Calling the tool with a Non-Admin-User. #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", String.valueOf(ErrorCode.CANT_READ_CONFIG_FILE.getCode()));
 		action(swaggerImport);
 	}

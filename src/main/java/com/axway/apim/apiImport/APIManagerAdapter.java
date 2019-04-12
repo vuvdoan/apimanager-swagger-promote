@@ -40,13 +40,17 @@ import com.axway.apim.lib.CommandParameters;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.lib.ErrorState;
 import com.axway.apim.swagger.api.properties.APIDefintion;
+import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.apiAccess.APIAccess;
 import com.axway.apim.swagger.api.properties.applications.ClientApplication;
 import com.axway.apim.swagger.api.properties.cacerts.CaCert;
+import com.axway.apim.swagger.api.properties.inboundprofiles.InboundProfile;
 import com.axway.apim.swagger.api.properties.organization.ApiAccess;
 import com.axway.apim.swagger.api.properties.organization.Organization;
+import com.axway.apim.swagger.api.properties.outboundprofiles.OutboundProfile;
 import com.axway.apim.swagger.api.properties.quota.APIQuota;
 import com.axway.apim.swagger.api.properties.quota.QuotaRestriction;
+import com.axway.apim.swagger.api.properties.tags.TagMap;
 import com.axway.apim.swagger.api.properties.user.User;
 import com.axway.apim.swagger.api.state.AbstractAPI;
 import com.axway.apim.swagger.api.state.ActualAPI;
@@ -273,7 +277,7 @@ public class APIManagerAdapter {
 			apiManagerApi = mapper.readValue(jsonConfiguration.toString(), ActualAPI.class);
 			apiManagerApi.setAPIDefinition(getOriginalAPIDefinitionFromAPIM(apiManagerApi.getApiId()));
 			if(apiManagerApi.getImage()!=null) {
-				apiManagerApi.getImage().setImageContent(getAPIImageFromAPIM(apiManagerApi.getId()));
+				((ActualAPI)apiManagerApi).setImage(getAPIImageFromAPIM(apiManagerApi.getId())); 
 			}
 			apiManagerApi.setValid(true);
 			// As the API-Manager REST doesn't provide information about Custom-Properties, we have to setup 
@@ -290,6 +294,9 @@ public class APIManagerAdapter {
 				((AbstractAPI)apiManagerApi).setCustomProperties(customProperties);
 			}
 			addQuotaConfiguration(apiManagerApi, desiredAPI);
+			handleOutboundProfile(apiManagerApi);
+			handleInboundProfile(apiManagerApi);
+			handleTags(apiManagerApi);
 			addClientOrganizations(apiManagerApi, desiredAPI);
 			addClientApplications(apiManagerApi, desiredAPI);
 			return apiManagerApi;
@@ -455,7 +462,39 @@ public class APIManagerAdapter {
 		return null;
 	}
 	
+	private static void handleOutboundProfile(IAPI actualAPI) {
+		if(actualAPI.getOutboundProfiles()==null) return;
+		OutboundProfile profile = actualAPI.getOutboundProfiles().get("_default");
+		if(		profile.getRouteType().equals("proxy") && 
+				profile.getRequestPolicy()==null && 
+				profile.getResponsePolicy()==null &&
+				profile.getRoutePolicy()==null &&
+				profile.getFaultHandlerPolicy()==null && 
+				profile.getAuthenticationProfile().equals("_default")
+				) 
+			// There is only the DEFAULT outbound profile configured in API-Manager. That means: Nothing!
+			((ActualAPI)actualAPI).setOutboundProfiles(null);
+	}
 	
+	private static void handleInboundProfile(IAPI actualAPI) {
+		if(actualAPI.getInboundProfiles()==null) return;
+		InboundProfile profile = actualAPI.getInboundProfiles().get("_default");
+		if(		profile.getSecurityProfile().equals("_default") && 
+				profile.getCorsProfile().equals("_default") && 
+				profile.getMonitorAPI().equals("true") &&
+				profile.getMonitorSubject().equals("authentication.subject.id")
+				) 
+			// There is only the DEFAULT inbound profile configured in API-Manager. That means: Nothing!
+			((ActualAPI)actualAPI).setInboundProfiles(null);
+	}
+	
+	private static void handleTags(IAPI actualAPI) {
+		if(actualAPI.getTags()==null) return;
+		TagMap<String, String[]> tags = actualAPI.getTags();
+		if(tags.size()==0) {
+			((ActualAPI)actualAPI).setTags(null);
+		}
+	}
 	
 	private static void addQuotaConfiguration(IAPI api, IAPI desiredAPI) throws AppException {
 		//APPLICATION:	00000000-0000-0000-0000-000000000001
@@ -585,15 +624,22 @@ public class APIManagerAdapter {
 		}
 	}
 	
-	private static byte[] getAPIImageFromAPIM(String backendApiID) throws AppException {
+	private static APIImage getAPIImageFromAPIM(String backendApiID) throws AppException {
+		APIImage image = new APIImage();
 		URI uri;
 		try {
 			uri = new URIBuilder(CommandParameters.getInstance().getAPIManagerURL()).setPath(RestAPICall.API_VERSION + "/proxies/"+backendApiID+"/image").build();
 			RestAPICall getRequest = new GETRequest(uri, null);
-			HttpEntity response = getRequest.execute().getEntity();
+			HttpResponse response = getRequest.execute();
 			if(response == null) return null; // no Image found in API-Manager
-			InputStream is = response.getContent();
-			return IOUtils.toByteArray(is);
+			InputStream is = response.getEntity().getContent();
+			image.setImageContent(IOUtils.toByteArray(is));
+			image.setBaseFilename("api-image");
+			if(response.containsHeader("Content-Type")) {
+				String contentType = response.getHeaders("Content-Type")[0].getValue();
+				image.setContentType(contentType);
+			}
+			return image;
 		} catch (Exception e) {
 			throw new AppException("Can't read Image from API-Manager.", ErrorCode.API_MANAGER_COMMUNICATION, e);
 		}

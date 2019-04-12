@@ -23,11 +23,11 @@ public class CustomPropertiesBasicTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-custom-prop-test-${apiNumber}");
 		variable("apiName", "API Custom-Properties Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### 1. Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/customproperties/1_custom-properties-config.json");
 		createVariable("customProperty1", "Test-Input 1");
@@ -55,7 +55,7 @@ public class CustomPropertiesBasicTestIT extends TestNGCitrusTestDesigner {
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId");
 		
 		echo("####### 2. Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/customproperties/1_custom-properties-config.json");
 		createVariable("customProperty1", "Test-Input 0815");
@@ -83,7 +83,7 @@ public class CustomPropertiesBasicTestIT extends TestNGCitrusTestDesigner {
 			.validate("$.[?(@.id=='${apiId}')].customProperty3", "false");
 		
 		echo("####### 3. Re-Import with No-Change #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/customproperties/1_custom-properties-config.json");
 		createVariable("customProperty1", "Test-Input 0815");
@@ -94,7 +94,7 @@ public class CustomPropertiesBasicTestIT extends TestNGCitrusTestDesigner {
 		
 		// Finally, Change the Custom-Prop of a published API, which will lead to a new API-ID!
 		echo("####### 4. Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/customproperties/1_custom-properties-config.json");
 		createVariable("customProperty1", "Test-Input Final");

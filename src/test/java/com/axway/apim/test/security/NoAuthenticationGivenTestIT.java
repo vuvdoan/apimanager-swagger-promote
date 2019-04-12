@@ -23,7 +23,7 @@ public class NoAuthenticationGivenTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/no-authn-test-${apiNumber}");
 		variable("apiName", "No AuthN Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");

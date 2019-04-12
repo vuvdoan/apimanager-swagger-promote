@@ -29,7 +29,7 @@ public class SwaggerFromURLDirectTestIT extends TestNGCitrusTestDesigner {
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' for the first time from URL #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "https://petstore.swagger.io/v2/swagger.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
 		
@@ -51,21 +51,21 @@ public class SwaggerFromURLDirectTestIT extends TestNGCitrusTestDesigner {
 		echo("####### Re-Import API from URL without a change #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "https://petstore.swagger.io/v2/swagger.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "10");
 		action(swaggerImport);
 		
 		echo("####### Re-Import API from URL without a change #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "sam/secret@https://petstore.swagger.io/v2/swagger.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "10");
 		action(swaggerImport);
 		
 		echo("####### Re-Import API from URL without a change #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "http://petstore.swagger.io/v2/swagger.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "10");
 		action(swaggerImport);
 	}

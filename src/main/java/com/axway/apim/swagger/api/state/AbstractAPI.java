@@ -21,9 +21,8 @@ import com.axway.apim.actions.tasks.props.VhostPropertyHandler;
 import com.axway.apim.lib.APIPropertyAnnotation;
 import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.CommandParameters;
-import com.axway.apim.lib.ErrorCode;
-import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.APIDefintion;
+import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.applications.ClientApplication;
 import com.axway.apim.swagger.api.properties.authenticationProfiles.AuthenticationProfile;
 import com.axway.apim.swagger.api.properties.cacerts.CaCert;
@@ -252,8 +251,12 @@ public abstract class AbstractAPI {
 		this.vhost = vhost;
 	}
 
-	public Map<String, String[]> getTags() {
+	public TagMap<String, String[]> getTags() {
 		return tags;
+	}
+	
+	public void setTags(TagMap<String, String[]> tags) {
+		this.tags = tags;
 	}
 	
 	public void setState(String state) {

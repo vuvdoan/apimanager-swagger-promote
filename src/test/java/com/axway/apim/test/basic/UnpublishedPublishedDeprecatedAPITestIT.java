@@ -28,7 +28,7 @@ public class UnpublishedPublishedDeprecatedAPITestIT extends TestNGCitrusTestDes
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' for the first time #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/4_flexible-status-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
 		
@@ -50,7 +50,7 @@ public class UnpublishedPublishedDeprecatedAPITestIT extends TestNGCitrusTestDes
 		echo("####### Change API-State to published #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/4_flexible-status-config.json");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
 		
@@ -72,7 +72,7 @@ public class UnpublishedPublishedDeprecatedAPITestIT extends TestNGCitrusTestDes
 		echo("####### Change API-State to deprecated #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/4_flexible-status-config.json");
-		createVariable("status", "deprecated");
+		createVariable("state", "deprecated");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
 		

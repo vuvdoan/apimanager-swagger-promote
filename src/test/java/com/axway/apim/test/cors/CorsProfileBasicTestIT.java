@@ -23,11 +23,11 @@ public class CorsProfileBasicTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-cors-profile-test-${apiNumber}");
 		variable("apiName", "API CORS-Profile Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### 1. Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/cors/1_api-with_default_cors.json");
 		createVariable("expectedReturnCode", "0");

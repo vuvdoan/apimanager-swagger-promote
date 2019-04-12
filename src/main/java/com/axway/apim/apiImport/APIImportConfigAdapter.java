@@ -224,7 +224,9 @@ public class APIImportConfigAdapter {
 	}
 	
 	private void validateDescription(IAPI apiConfig) throws AppException {
-		if(apiConfig.getDescriptionType()==null || apiConfig.getDescriptionType().equals("original")) return;
+		// Some default handling
+		if(apiConfig.getDescriptionType()==null) ((DesiredAPI)apiConfig).setDescriptionType("original");
+		if(apiConfig.getDescriptionType().equals("original")) return;
 		String descriptionType = apiConfig.getDescriptionType();
 		if(descriptionType.equals("manual")) {
 			if(apiConfig.getDescriptionManual()==null) {

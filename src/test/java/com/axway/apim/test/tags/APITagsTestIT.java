@@ -23,11 +23,11 @@ public class APITagsTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-tags-test-${apiNumber}");
 		variable("apiName", "API Tags Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/tags/1_tags-config.json");
 		createVariable("expectedReturnCode", "0");
@@ -53,7 +53,7 @@ public class APITagsTestIT extends TestNGCitrusTestDesigner {
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId");
 		
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/tags/2_tags-config.json");
 		createVariable("expectedReturnCode", "0");
@@ -79,7 +79,7 @@ public class APITagsTestIT extends TestNGCitrusTestDesigner {
 		
 		// Finally, Change the Tags a published API, which will lead to a new API-ID!
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/tags/3_tags-config.json");
 		createVariable("expectedReturnCode", "0");

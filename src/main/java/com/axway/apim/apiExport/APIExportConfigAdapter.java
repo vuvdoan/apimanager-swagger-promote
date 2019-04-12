@@ -13,6 +13,7 @@ import com.axway.apim.apiImport.APIManagerAdapter;
 import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.swagger.api.properties.APIDefintion;
+import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.state.ActualAPI;
 import com.axway.apim.swagger.api.state.DesiredAPI;
 import com.axway.apim.swagger.api.state.IAPI;
@@ -42,15 +43,15 @@ public class APIExportConfigAdapter {
 	}
 
 	public void exportAPIs() throws AppException {
-		List<IAPI> exportAPIs = getAPIsToExport();
-		for (IAPI exportAPI : exportAPIs) {
+		List<ExportAPI> exportAPIs = getAPIsToExport();
+		for (ExportAPI exportAPI : exportAPIs) {
 			saveAPILocally(exportAPI);
 		}
 	}
 
-	private List<IAPI> getAPIsToExport() throws AppException {
-		List<IAPI> exportAPIList = new ArrayList<IAPI>();
-		IAPI exportAPI = null;
+	private List<ExportAPI> getAPIsToExport() throws AppException {
+		List<ExportAPI> exportAPIList = new ArrayList<ExportAPI>();
+		ExportAPI exportAPI = null;
 		if (!this.exportApiPath.contains("*")) {
 			JsonNode mgrAPI = apiManager.getExistingAPI(this.exportApiPath);
 			IAPI actualAPI = apiManager.getAPIManagerAPI(mgrAPI, getAPITemplate());
@@ -62,9 +63,9 @@ public class APIExportConfigAdapter {
 		return exportAPIList;
 	}
 
-	private void saveAPILocally(IAPI exportAPI) throws AppException {
+	private void saveAPILocally(ExportAPI exportAPI) throws AppException {
 		String apiPath = getAPIExportFolder(exportAPI.getPath());
-		File localFolder = new File(this.localFolder + "/" + apiPath);
+		File localFolder = new File(this.localFolder + apiPath);
 		if (!localFolder.mkdirs()) {
 			throw new AppException("Cant create export folder", ErrorCode.UNXPECTED_ERROR);
 		}
@@ -87,6 +88,11 @@ public class APIExportConfigAdapter {
 		} catch (Exception e) {
 			throw new AppException("Can't write API-Configuration file.", ErrorCode.UNXPECTED_ERROR, e);
 		}
+		APIImage image = exportAPI.getAPIImage();
+		if(image!=null) {
+			writeBytesToFile(image.getImageContent(), localFolder+"/" + image.getBaseFilename()+image.getFileExtension());
+		}
+		LOG.info("Successfully export API to folder: " + localFolder);
 	}
 
 	private static void writeBytesToFile(byte[] bFile, String fileDest) throws AppException {

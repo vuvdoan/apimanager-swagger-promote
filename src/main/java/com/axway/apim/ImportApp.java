@@ -112,6 +112,11 @@ public class ImportApp {
 			option.setArgName("true");
 			internalOptions.addOption(option);
 
+			option = new Option("handleNullAsChange", true, "If set to true, null properties will be considered as a change.");
+			option.setRequired(false);
+			option.setArgName("true");
+			internalOptions.addOption(option);
+
 			option = new  Option("h", "help", false, "Print the help");
 			option.setRequired(false);
 			internalOptions.addOption(option);

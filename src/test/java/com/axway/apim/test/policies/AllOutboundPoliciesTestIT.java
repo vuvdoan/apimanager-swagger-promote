@@ -23,7 +23,7 @@ public class AllOutboundPoliciesTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-key-test-${apiNumber}");
 		variable("apiName", "API Key Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");

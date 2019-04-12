@@ -23,11 +23,11 @@ public class APINoTagsChangedTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-tags-test-${apiNumber}");
 		variable("apiName", "API Tags Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/tags/1_tags-config.json");
 		createVariable("expectedReturnCode", "0");
@@ -53,7 +53,7 @@ public class APINoTagsChangedTestIT extends TestNGCitrusTestDesigner {
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId");
 		
 		echo("####### Importing exactly the same API with the same tags --> No-Change: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/tags/1_tags-config.json");
 		createVariable("expectedReturnCode", "10"); // This is the real test here!

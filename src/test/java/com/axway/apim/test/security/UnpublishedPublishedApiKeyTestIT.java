@@ -29,7 +29,7 @@ public class UnpublishedPublishedApiKeyTestIT extends TestNGCitrusTestDesigner {
 		createVariable("apiKeyFieldName", "KeyId");
 		createVariable("takeFrom", "HEADER");
 		createVariable("removeCredentialsOnSuccess", "false");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/security/1_api-apikey.json");
 		createVariable("expectedReturnCode", "0");
@@ -58,7 +58,7 @@ public class UnpublishedPublishedApiKeyTestIT extends TestNGCitrusTestDesigner {
 		createVariable("apiKeyFieldName", "KeyId-Test");
 		createVariable("takeFrom", "QUERY");
 		createVariable("removeCredentialsOnSuccess", "true");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/security/1_api-apikey.json");
 		createVariable("expectedReturnCode", "0");
@@ -85,7 +85,7 @@ public class UnpublishedPublishedApiKeyTestIT extends TestNGCitrusTestDesigner {
 		createVariable("apiKeyFieldName", "KeyId-Test-Published");
 		createVariable("takeFrom", "HEADER");
 		createVariable("removeCredentialsOnSuccess", "false");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable("enforce", "true");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/security/1_api-apikey.json");

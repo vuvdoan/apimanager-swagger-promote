@@ -5,14 +5,8 @@ import java.util.LinkedHashMap;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class TagMap<K, V> extends LinkedHashMap<String, String[]> {
 
-	protected ObjectMapper objectMapper = new ObjectMapper();
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public TagMap() {
@@ -25,6 +19,9 @@ public class TagMap<K, V> extends LinkedHashMap<String, String[]> {
 	@Override
 	public boolean equals(Object o) {
 		if (o == this) return true;
+		
+		// We have no tags vs. null --> There is no change
+		if(o == null && this.size()==0) return true;
 		
 		if (!(o instanceof TagMap)) return false;
 		

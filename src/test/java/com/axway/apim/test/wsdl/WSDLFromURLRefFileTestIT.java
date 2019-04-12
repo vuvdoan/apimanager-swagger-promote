@@ -29,7 +29,7 @@ public class WSDLFromURLRefFileTestIT extends TestNGCitrusTestDesigner {
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' for the first time from URL #######");
 		createVariable(ImportTestAction.API_DEFINITION, "/com/axway/apim/test/files/wsdl/wsdl-file-with-username.url");
 		createVariable(ImportTestAction.API_CONFIG, "/com/axway/apim/test/files/wsdl/wsdl-minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "0");
 		action(importAction);
 		
@@ -51,7 +51,7 @@ public class WSDLFromURLRefFileTestIT extends TestNGCitrusTestDesigner {
 		echo("####### Re-Import API from URL without a change #######");
 		createVariable(ImportTestAction.API_DEFINITION, "/com/axway/apim/test/files/wsdl/wsdl-file-with-username.url");
 		createVariable(ImportTestAction.API_CONFIG, "/com/axway/apim/test/files/wsdl/wsdl-minimal-config.json");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("expectedReturnCode", "10");
 		action(importAction);
 	}

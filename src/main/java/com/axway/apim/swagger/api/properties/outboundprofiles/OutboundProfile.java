@@ -1,6 +1,5 @@
 package com.axway.apim.swagger.api.properties.outboundprofiles;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -201,11 +200,18 @@ public class OutboundProfile {
 				StringUtils.equals(otherOutboundProfile.getFaultHandlerPolicy(), this.getFaultHandlerPolicy()) &&
 				StringUtils.equals(otherOutboundProfile.getRequestPolicy(), this.getRequestPolicy()) &&
 				StringUtils.equals(otherOutboundProfile.getResponsePolicy(), this.getResponsePolicy()) &&
-				//StringUtils.equals(otherOutboundProfile.getRoutePolicy(), this.getRoutePolicy()) &&
+				StringUtils.equals(otherOutboundProfile.getRoutePolicy(), this.getRoutePolicy()) &&
 				StringUtils.equals(otherOutboundProfile.getRouteType(), this.getRouteType()) &&
 				Arrays.equals(otherOutboundProfile.getParameters(), this.getParameters());
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return "OutboundProfile [routeType=" + routeType + ", requestPolicy=" + requestPolicy + ", responsePolicy="
+				+ responsePolicy + ", routePolicy=" + routePolicy + ", faultHandlerPolicy=" + faultHandlerPolicy
+				+ ", parameters=" + Arrays.toString(parameters) + "]";
 	}
 }

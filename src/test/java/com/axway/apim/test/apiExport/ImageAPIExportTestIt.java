@@ -10,7 +10,7 @@ import com.consol.citrus.dsl.testng.TestNGCitrusTestDesigner;
 import com.consol.citrus.functions.core.RandomNumberFunction;
 
 @Test
-public class SimpleAPIExportTestIt extends TestNGCitrusTestDesigner {
+public class ImageAPIExportTestIt extends TestNGCitrusTestDesigner {
 	
 	@Autowired
 	private ExportTestAction exportAction;
@@ -19,7 +19,8 @@ public class SimpleAPIExportTestIt extends TestNGCitrusTestDesigner {
 	
 	@CitrusTest
 	public void run() {
-		description("Import an API, export it and Re-Import. Should lead to a no-change!");
+		description("Import an API with an Image, export it and Re-Import. Should lead to a no-change!");
+		
 		
 		variable("handleNullAsChange", "true"); // Enforce to check all properties!
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
@@ -34,7 +35,8 @@ public class SimpleAPIExportTestIt extends TestNGCitrusTestDesigner {
 
 		echo("####### Importing the API, which should exported in the second step #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
-		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/minimal-config.json");
+		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/image/2_image_included_flex_state.json");
+		createVariable("image", "/com/axway/apim/test/files/basic/API-Logo.jpg");
 		createVariable("expectedReturnCode", "0");
 		action(importAction);
 
@@ -44,8 +46,9 @@ public class SimpleAPIExportTestIt extends TestNGCitrusTestDesigner {
 		action(exportAction);
 		
 		echo("####### Re-Import the same API and it must lead to a No-Change result #######");
-		createVariable(ImportTestAction.API_DEFINITION,  "${exportLocation}/${exportFolder}/${exportAPIName}");
-		createVariable(ImportTestAction.API_CONFIG,  "${exportLocation}/${exportFolder}/api-config.json");
+		createVariable(ImportTestAction.API_DEFINITION,  "${exportLocation}${exportFolder}/${exportAPIName}");
+		createVariable(ImportTestAction.API_CONFIG,  "${exportLocation}${exportFolder}/api-config.json");
+		createVariable("image",  "${exportLocation}${exportFolder}/api-image.jpg");
 		createVariable("expectedReturnCode", "10");
 		action(importAction);
 	}

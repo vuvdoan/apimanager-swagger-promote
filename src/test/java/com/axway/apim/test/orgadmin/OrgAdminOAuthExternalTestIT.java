@@ -23,7 +23,7 @@ public class OrgAdminOAuthExternalTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/oadmin-oauth-test-${apiNumber}");
 		variable("apiName", "OAdmin OAuth-External Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		variable("ignoreAdminAccount", "true"); // This tests simulate to use only an Org-Admin-Account
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");

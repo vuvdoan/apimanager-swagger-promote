@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -33,6 +35,7 @@ public class ImportTestAction extends AbstractTestAction {
 		String origConfigFile 			= context.getVariable(API_CONFIG);
 		String stage				= null;
 		String apiDefinition			= null;
+		String handleNullAsChange	= "false";
 		boolean useEnvironmentOnly = false;
 		try {
 			stage 				= context.getVariable("stage");
@@ -76,7 +79,9 @@ public class ImportTestAction extends AbstractTestAction {
 		try {
 			ignoreAdminAccount = context.getVariable("ignoreAdminAccount");
 		} catch (Exception ignore) {};
-		
+		try {
+			handleNullAsChange 	= context.getVariable("handleNullAsChange");
+		} catch (Exception ignore) {};
 		
 		if(stage==null) {
 			stage = "NOT_SET";
@@ -87,6 +92,8 @@ public class ImportTestAction extends AbstractTestAction {
 			// This creates the dynamic staging config file! (For testing, we also support reading out of a file directly)
 			replaceDynamicContentInFile(stageConfigFile, context, replacedStagedConfig);
 		}
+		copyAPIImageToTempDir(configFile, context);
+
 		String[] args;
 		if(useEnvironmentOnly) {
 			args = new String[] {  
@@ -103,7 +110,8 @@ public class ImportTestAction extends AbstractTestAction {
 					"-iq", ignoreQuotas, 
 					"-clientOrgsMode", clientOrgsMode, 
 					"-clientAppsMode", clientAppsMode, 
-					"-ignoreAdminAccount", ignoreAdminAccount};
+					"-ignoreAdminAccount", ignoreAdminAccount, 
+					"-handleNullAsChange", handleNullAsChange};
 		}
 		LOG.info("Ignoring admin account: '"+ignoreAdminAccount+"' | Enforce breaking change: " + enforce + " | useEnvironmentOnly: " + useEnvironmentOnly);
 		int rc = ImportApp.run(args);
@@ -166,6 +174,23 @@ public class ImportTestAction extends AbstractTestAction {
 		} catch (IOException e) {
 			LOG.error("Cant create temp file", e);
 			throw new RuntimeException(e);
+		}
+	}
+	
+	private static void copyAPIImageToTempDir(String configFile, TestContext context) {
+		// If there is an image relative to original config-file, copy it into the temp dir
+		File configFileObject = new File(configFile); // This is the replaced config file
+		File apiImage;
+		try {
+			apiImage = new File(context.getVariable("image"));
+		} catch (Exception ignore) { return; } // No image configured, nothing to do
+		if(apiImage.exists()) {
+			try {
+				Files.copy(apiImage.toPath(), new File(configFileObject.getParent()+"/"+apiImage.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				LOG.error("Can't copy api-image into working directory");
+				throw new RuntimeException();
+			}
 		}
 	}
 }

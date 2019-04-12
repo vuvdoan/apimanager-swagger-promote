@@ -23,11 +23,11 @@ public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/api-key-test-${apiNumber}");
 		variable("apiName", "API Key Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 		
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "unpublished");
+		createVariable("state", "unpublished");
 		createVariable("vhost", "api123.customer.com");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/vhost/1_vhost-config.json");
@@ -52,7 +52,7 @@ public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId");
 		
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
-		createVariable("status", "published");
+		createVariable("state", "published");
 		createVariable("vhost", "api123.customer.com");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/vhost/1_vhost-config.json");

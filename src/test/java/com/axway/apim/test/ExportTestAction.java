@@ -21,6 +21,7 @@ public class ExportTestAction extends AbstractTestAction {
 	public void doExecute(TestContext context) {
 		
 		boolean useEnvironmentOnly	= false;
+		
 		String stage				= null;
 		try {
 			stage 				= context.getVariable("stage");

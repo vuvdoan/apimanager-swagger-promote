@@ -23,7 +23,7 @@ public class BasicCaCertTestIT extends TestNGCitrusTestDesigner {
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
 		variable("apiPath", "/cacerts-test-${apiNumber}");
 		variable("apiName", "Certificates Test ${apiNumber}");
-		variable("status", "unpublished");
+		variable("state", "unpublished");
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/security/petstore.json");

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.axway.apim.actions.CreateNewAPI;
 import com.axway.apim.lib.APIPropertyAnnotation;
 import com.axway.apim.lib.AppException;
+import com.axway.apim.lib.CommandParameters;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.swagger.api.state.IAPI;
 
@@ -80,7 +81,7 @@ public class APIChangeState {
 					Object desiredValue = method.invoke(desiredAPI, null);
 					Object actualValue = method2.invoke(actualAPI, null);
 					if(desiredValue == null && actualValue == null) continue;
-					if(desiredValue == null) {
+					if(!CommandParameters.getInstance().handleNullAsChange() && desiredValue == null) {
 						LOG.debug("Ignoring Null-Property: " + field.getName() + "[Desired: '"+desiredValue+"' vs Actual: '"+actualValue+"']");
 						continue; // No change, if nothing is provided!
 					}
@@ -96,9 +97,9 @@ public class APIChangeState {
 						if (!isWritable(property, this.actualAPI.getState())) {
 							this.updateExistingAPI = false; // Found a NON-Changeable property, can't update the existing API
 						}
-						LOG.info("Changed property: " + field.getName() + "[Desired: '"+desiredValue+"' vs Actual: '"+actualValue+"']");
+						LOG.info("Changed property: " + field.getName() + "[Desired: '"+desiredValue+"' vs. Actual: '"+actualValue+"']");
 					} else {
-						LOG.debug("No change for property: " + field.getName() + "[Desired: '"+desiredValue+"' vs Actual: '"+actualValue+"']");
+						LOG.debug("No change for property: " + field.getName() + "[Desired: '"+desiredValue+"' vs. Actual: '"+actualValue+"']");
 					}
 
 				}
@@ -224,9 +225,14 @@ public class APIChangeState {
 	
 	private static boolean compareValues(Object actualValue, Object desiredValue) {
 		if(actualValue instanceof List) {
-			return ((List<?>)actualValue).size() == ((List<?>)desiredValue).size() && 
-					((List<?>)actualValue).containsAll((List<?>)desiredValue) && 
-					((List<?>)desiredValue).containsAll((List<?>)actualValue);
+			if(CommandParameters.getInstance().handleNullAsChange() && 
+					(actualValue!=null && desiredValue==null)) { 
+				return true;
+			} else {
+				return ((List<?>)actualValue).size() == ((List<?>)desiredValue).size() && 
+						((List<?>)actualValue).containsAll((List<?>)desiredValue) && 
+						((List<?>)desiredValue).containsAll((List<?>)actualValue);
+			}
 		} else {
 			return actualValue.equals(desiredValue);
 		}

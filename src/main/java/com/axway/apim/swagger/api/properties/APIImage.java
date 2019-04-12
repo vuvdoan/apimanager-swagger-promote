@@ -14,8 +14,16 @@ public class APIImage {
 	
 	private String baseFilename = null;
 	
+	private String contentType = null;
+	
+	private String fileExtension = null;
+	
 	public byte[] getImageContent() {
 		return imageContent;
+	}
+	
+	public APIImage() {
+		super();
 	}
 
 	public APIImage(String filename) {
@@ -23,7 +31,26 @@ public class APIImage {
 		this.filename = filename;
 	}
 
+	public String getImageType() {
+		return contentType;
+	}
 
+	public void setContentType(String contentType) {
+		if(contentType.toLowerCase().contains("jpeg") || contentType.toLowerCase().contains("jpg")) {
+			fileExtension = ".jpg";
+		} else if(contentType.toLowerCase().contains("png")) {
+			fileExtension = ".jpg";
+		} else if(contentType.toLowerCase().contains("gif")) {
+			fileExtension = ".gif";
+		} else {
+			fileExtension = ".unknown";
+		}
+		this.contentType = contentType;
+	}
+
+	public String getFileExtension() {
+		return fileExtension;
+	}
 
 	@Override
 	public boolean equals(Object other) {
