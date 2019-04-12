@@ -23,6 +23,7 @@
     </bean>
     
     <bean class="com.axway.apim.test.ImportTestAction"/>
+    <bean class="com.axway.apim.test.ExportTestAction"/>
     <bean id="myBeforeSuite" class="com.axway.apim.test.setup.InitializationTestIT"/>
     
     <citrus:global-variables>

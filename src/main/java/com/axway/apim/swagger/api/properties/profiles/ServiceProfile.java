@@ -35,11 +35,6 @@ public class ServiceProfile {
 		if (getClass() != obj.getClass())
 			return false;
 		ServiceProfile other = (ServiceProfile) obj;
-		if (apiId == null) {
-			if (other.apiId != null)
-				return false;
-		} else if (!apiId.equals(other.apiId))
-			return false;
 		if (basePath == null) {
 			if (other.basePath != null)
 				return false;

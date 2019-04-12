@@ -1,4 +1,4 @@
-package com.axway.apim.swagger;
+package com.axway.apim.apiImport;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

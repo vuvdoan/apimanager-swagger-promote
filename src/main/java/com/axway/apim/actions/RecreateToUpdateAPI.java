@@ -8,9 +8,9 @@ import com.axway.apim.actions.tasks.ManageClientOrgs;
 import com.axway.apim.actions.tasks.UpdateAPIStatus;
 import com.axway.apim.actions.tasks.UpdateQuotaConfiguration;
 import com.axway.apim.actions.tasks.UpgradeAccessToNewerAPI;
+import com.axway.apim.apiImport.APIChangeState;
+import com.axway.apim.apiImport.APIManagerAdapter;
 import com.axway.apim.lib.AppException;
-import com.axway.apim.swagger.APIChangeState;
-import com.axway.apim.swagger.APIManagerAdapter;
 import com.axway.apim.swagger.api.state.APIBaseDefinition;
 import com.axway.apim.swagger.api.state.IAPI;
 

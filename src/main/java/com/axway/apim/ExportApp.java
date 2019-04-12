@@ -13,30 +13,25 @@ import org.slf4j.LoggerFactory;
 
 import com.axway.apim.actions.rest.APIMHttpClient;
 import com.axway.apim.actions.rest.Transaction;
+import com.axway.apim.apiExport.APIExportConfigAdapter;
+import com.axway.apim.apiImport.APIChangeState;
+import com.axway.apim.apiImport.APIImportConfigAdapter;
+import com.axway.apim.apiImport.APIManagerAdapter;
 import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.CommandParameters;
 import com.axway.apim.lib.EnvironmentProperties;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.lib.ErrorState;
 import com.axway.apim.lib.RelaxedParser;
-import com.axway.apim.swagger.APIChangeState;
-import com.axway.apim.swagger.APIImportConfigAdapter;
-import com.axway.apim.swagger.APIManagerAdapter;
 import com.axway.apim.swagger.api.state.IAPI;
 
 /**
- * This is the Entry-Point of program and responsible to:</br>
- * - read the command-line parameters to create a <code>CommandParameters</code></br>
- * - next is to read the API-Contract by creating an <code>APIImportConfig</code> instance and calling getImportAPIDefinition()</br>
- * - the <code>APIManagerAdapter</code> method: <code>getAPIManagerAPI()</code> is used to create the API-Manager API state</br>
- * - An <code>APIChangeState</code> is created based on ImportAPI & API-Manager API
- * - Finally the APIManagerAdapter:applyChanges() is called to replicate the state into the APIManager.   
  * 
  * @author cwiechmann@axway.com
  */
-public class App {
+public class ExportApp {
 
-	private static Logger LOG = LoggerFactory.getLogger(App.class);
+	private static Logger LOG = LoggerFactory.getLogger(ExportApp.class);
 
 	public static void main(String args[]) { 
 		int rc = run(args);
@@ -48,28 +43,21 @@ public class App {
 			Options options = new Options();
 			Option option;
 			
-			option = new Option("a", "apidefinition", true, "(Optional) The API Definition either as Swagger (JSON-Formated) or a WSDL for SOAP-Services:\n"
-					+ "- in local filesystem using a relative or absolute path. Example: swagger_file.json\n"
-					+ "  Please note: Local filesystem is not supported for WSDLs. Please use direct URL or a URL-Reference-File.\n"
-					+ "- a URL providing the Swagger-File or WSDL-File. Examples:\n"
-					+ "  [username/password@]https://any.host.com/my/path/to/swagger.json\n"
-					+ "  [username/password@]http://www.dneonline.com/calculator.asmx?wsdl\n"
-					+ "- a reference file called anyname-i-want.url which contains a line with the URL\n"
-					+ "  (same format as above for Swagger or WSDL)."
-					+ "  If not specified, the API Definition configuration is read directly from the JSON-Formatted API-Config");
-				option.setRequired(false);
-				option.setArgName("swagger_file.json");
-			options.addOption(option);
-			
-			option = new Option("c", "contract", true, "This is the JSON-Formatted API-Config containing information how to expose the API");
+			option = new Option("a", "api-path", true, "Define the APIs to be exported, based on the exposure path.\n"
+					+ "You can use wildcards to export multiple APIs:\n"
+					+ "-a /api/v1/my/great/api     : Export a specific API\n"
+					+ "-a *                        : Export all APIs\n"
+					+ "-a /api/v1/any*             : Export all APIs with this prefix\n"
+					+ "-a /api/v1/*/some/other/api : Even that is possible\n");
 				option.setRequired(true);
-				option.setArgName("api_config.json");
+				option.setArgName("/api/v1/my/great/api");
 			options.addOption(option);
 			
-			option = new Option("s", "stage", true, "The stage this API should be imported.\n"
-					+ "Will be used to lookup stage specific API-Config overrides (e.g.: api_config.preprod.json)");
-				option.setArgName("preprod");
-			options.addOption(option);
+			option = new Option("l", "localFolder", true, "Defines the location to store API-Definitions locally. Defaults to currecnt folder.\n"
+					+ "For each API a new folder is created automatically.");
+				option.setRequired(false);
+				option.setArgName("my/apis");
+			options.addOption(option);			
 			
 			option = new Option("h", "host", true, "The API-Manager hostname the API should be imported");
 				option.setRequired(false);
@@ -90,35 +78,17 @@ public class App {
 				option.setArgName("changeme");
 			options.addOption(option);
 			
-			option = new Option("f", "force", true, "Breaking changes can't be imported without this flag, unless the API is unpublished.");
-				option.setArgName("true/[false]");
+			option = new Option("s", "stage", true, "The Stage or basically the API-Manager enviroment you want use.\n"
+					+ "Provide an env.<stage>.properties with required parameters like host, username, password.");
+				option.setArgName("preprod");
 			options.addOption(option);
-			
-			option = new Option("iq", "ignoreQuotas", true, "Use this flag to ignore configured API quotas.");
-			option.setArgName("true/[false]");
-			options.addOption(option);
-			
-			option = new Option("clientOrgsMode", true, "Controls how configured Client-Organizations are treated. Defaults to replace!");
-			option.setArgName("ignore|replace|add");
-			options.addOption(option);
-			
-			option = new Option("clientAppsMode", true, "Controls how configured Client-Applications are treated. Defaults to replace!");
-			option.setArgName("ignore|replace|add");
-			options.addOption(option);	
 			
 			Options internalOptions = new Options();
-			option = new Option("ignoreAdminAccount", true, "If set, the tool wont load the env.properties. This is used for testing only.");
-			option.setRequired(false);
-			option.setArgName("true");
-			internalOptions.addOption(option);
-
 			option = new  Option("h", "help", false, "Print the help");
 			option.setRequired(false);
 			internalOptions.addOption(option);
 			
-			
 			CommandLineParser parser = new RelaxedParser();
-			
 			CommandLine cmd = null;
 			CommandLine internalCmd = null;
 			
@@ -136,7 +106,7 @@ public class App {
 			}
 			
 			LOG.info("------------------------------------------------------------------------");
-			LOG.info("API-Manager Promote Version: 1.5.0");
+			LOG.info("API-Manager Promote Version: 1.5.0 - Export");
 			LOG.info("                                                                        ");
 			LOG.info("To report issues or get help, please visit: ");
 			LOG.info("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote");
@@ -149,16 +119,15 @@ public class App {
 			Transaction.deleteInstance();
 			
 			CommandParameters params = new CommandParameters(cmd, internalCmd, new EnvironmentProperties(cmd.getOptionValue("stage")));
+
+			//APIManagerAdapter apimAdapter = APIManagerAdapter.getInstance();
 			
-			APIManagerAdapter apimAdapter = APIManagerAdapter.getInstance();
-			
-			APIImportConfigAdapter contract = new APIImportConfigAdapter(params.getOptionValue("contract"), 
-					params.getOptionValue("stage"), params.getOptionValue("apidefinition"), apimAdapter.isUsingOrgAdmin());
-			IAPI desiredAPI = contract.getDesiredAPI();
-			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath()), desiredAPI);
+			APIExportConfigAdapter exportAdapter = new APIExportConfigAdapter(params.getOptionValue("api-path"), params.getOptionValue("localFolder"));
+			exportAdapter.exportAPIs();
+/*			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath()), desiredAPI);
 			APIChangeState changeActions = new APIChangeState(actualAPI, desiredAPI);
 			apimAdapter.applyChanges(changeActions);
-			LOG.info("Successfully replicated API-State into API-Manager");
+			LOG.info("Successfully replicated API-State into API-Manager");*/
 			return 0;
 		} catch (AppException ap) {
 			ErrorState errorState = ErrorState.getInstance();

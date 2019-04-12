@@ -191,8 +191,6 @@ public abstract class AbstractAPI {
 	
 	protected boolean isValid = false;
 	
-	protected String orgId = null;
-	
 
 	public boolean isValid() {
 		return this.isValid;
@@ -200,14 +198,6 @@ public abstract class AbstractAPI {
 
 	public void setValid(boolean isValid) {
 		this.isValid = isValid;
-	}
-
-	public String getOrgId() throws AppException {
-		return this.orgId;
-	}
-	
-	public void setOrgId(String orgId) {
-		this.orgId = orgId;
 	}
 
 	public APIDefintion getAPIDefinition() {
@@ -322,7 +312,7 @@ public abstract class AbstractAPI {
 		this.organizationId = organizationId;
 	}
 
-	public String getPath() {
+	public String getPath() throws AppException {
 		return path;
 	}
 

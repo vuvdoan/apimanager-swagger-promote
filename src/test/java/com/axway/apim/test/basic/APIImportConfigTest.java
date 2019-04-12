@@ -6,9 +6,9 @@ import org.apache.commons.io.IOUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.axway.apim.apiImport.APIImportConfigAdapter;
+import com.axway.apim.apiImport.APIManagerAdapter;
 import com.axway.apim.lib.AppException;
-import com.axway.apim.swagger.APIImportConfigAdapter;
-import com.axway.apim.swagger.APIManagerAdapter;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class APIImportConfigTest {

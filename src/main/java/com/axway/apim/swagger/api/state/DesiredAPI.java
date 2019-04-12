@@ -5,8 +5,8 @@ import java.util.LinkedHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.axway.apim.apiImport.APIImportConfigAdapter;
 import com.axway.apim.lib.AppException;
-import com.axway.apim.swagger.APIImportConfigAdapter;
 import com.axway.apim.swagger.api.properties.profiles.ServiceProfile;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

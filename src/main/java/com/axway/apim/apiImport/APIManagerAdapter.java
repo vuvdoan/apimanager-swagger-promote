@@ -1,4 +1,4 @@
-package com.axway.apim.swagger;
+package com.axway.apim.apiImport;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -271,7 +271,7 @@ public class APIManagerAdapter {
 		IAPI apiManagerApi;
 		try {
 			apiManagerApi = mapper.readValue(jsonConfiguration.toString(), ActualAPI.class);
-			apiManagerApi.setAPIDefinition(new APIDefintion(getOriginalAPIDefinitionFromAPIM(apiManagerApi.getApiId())));
+			apiManagerApi.setAPIDefinition(getOriginalAPIDefinitionFromAPIM(apiManagerApi.getApiId()));
 			if(apiManagerApi.getImage()!=null) {
 				apiManagerApi.getImage().setImageContent(getAPIImageFromAPIM(apiManagerApi.getId()));
 			}
@@ -565,15 +565,21 @@ public class APIManagerAdapter {
 		}
 	}
 	
-	private static byte[] getOriginalAPIDefinitionFromAPIM(String backendApiID) throws AppException {
+	private static APIDefintion getOriginalAPIDefinitionFromAPIM(String backendApiID) throws AppException {
 		URI uri;
+		APIDefintion apiDefinition;
 		try {
 			uri = new URIBuilder(CommandParameters.getInstance().getAPIManagerURL()).setPath(RestAPICall.API_VERSION + "/apirepo/"+backendApiID+"/download")
 					.setParameter("original", "true").build();
 			RestAPICall getRequest = new GETRequest(uri, null);
 			HttpResponse response=getRequest.execute();
 			String res = EntityUtils.toString(response.getEntity(),StandardCharsets.UTF_8);
-			return res.getBytes(StandardCharsets.UTF_8);
+			apiDefinition = new APIDefintion(res.getBytes(StandardCharsets.UTF_8));
+			if(response.containsHeader("Content-Disposition")) {
+				String origFilename = response.getHeaders("Content-Disposition")[0].getValue();
+				apiDefinition.setAPIDefinitionFile(origFilename.substring(origFilename.indexOf("filename=")+9));
+			}
+			return apiDefinition;
 		} catch (Exception e) {
 			throw new AppException("Can't read Swagger-File.", ErrorCode.CANT_READ_API_DEFINITION_FILE, e);
 		}

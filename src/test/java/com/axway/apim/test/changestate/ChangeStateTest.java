@@ -9,9 +9,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.axway.apim.apiImport.APIChangeState;
 import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.TestIndicator;
-import com.axway.apim.swagger.APIChangeState;
 import com.axway.apim.swagger.api.state.ActualAPI;
 import com.axway.apim.swagger.api.state.IAPI;
 

@@ -1,4 +1,4 @@
-package com.axway.apim.swagger;
+package com.axway.apim.apiImport;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -159,9 +159,9 @@ public class APIImportConfigAdapter {
 	
 	private void validateOrganization(IAPI apiConfig) throws AppException {
 		if(usingOrgAdmin) { // Hardcode the orgId to the organization of the used OrgAdmin
-			apiConfig.setOrgId(APIManagerAdapter.getCurrentUser(false).getOrganizationId());
+			apiConfig.setOrganizationId(APIManagerAdapter.getCurrentUser(false).getOrganizationId());
 		} else {
-			apiConfig.setOrgId(APIManagerAdapter.getInstance().getOrgId(apiConfig.getOrganization()));
+			apiConfig.setOrganizationId(APIManagerAdapter.getInstance().getOrgId(apiConfig.getOrganization()));
 		}
 	}
 
