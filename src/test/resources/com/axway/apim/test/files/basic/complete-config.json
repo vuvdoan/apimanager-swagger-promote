@@ -1,0 +1,81 @@
+{
+   "name":"${apiName}",
+   "path":"${apiPath}",
+   "state":"${state}",
+   "version":"3.0.0",
+   "image":"${image}",
+   "organization":"API Development ${orgNumber}",
+   "organization":"API Development ${orgNumber}",
+   "descriptionType":"${descriptionType}",
+   "descriptionManual":"${descriptionManual}",
+   "outboundProfiles":{
+      "_default":{
+         "requestPolicy":"Request policy 1",
+         "routePolicy":"Routing policy 1",
+         "responsePolicy":"Response policy 1",
+         "faultHandlerPolicy":"Faulthandler policy 1"
+      }
+   },
+   "caCerts":[
+      {
+         "certFile":"/com/axway/apim/test/files/cacerts/swaggerio.crt",
+         "useForOutbound":true,
+         "useForInbound":false
+      },
+      {
+         "certFile":"/com/axway/apim/test/files/cacerts/GoDaddyRootCertificateAuthority-G2.crt",
+         "useForOutbound":true,
+         "useForInbound":false
+      },
+      {
+         "certFile":"/com/axway/apim/test/files/cacerts/GoDaddySecureCertificateAuthority-G2.crt",
+         "useForOutbound":true,
+         "useForInbound":false
+      },
+      {
+         "certFile":"${certFile4}",
+         "useForOutbound":false,
+         "useForInbound":true
+      }
+   ],
+   "tags":{
+      "tag-name 2":[
+         "value 3",
+         "value 4"
+      ],
+      "tag-name 1":[
+         "value 1",
+         "value 2"
+      ]
+   },
+   "customProperties":{
+      "customProperty1":"Test-Input 1",
+      "customProperty2":"1",
+      "customProperty3":"true"
+   },
+   "corsProfiles":[
+      {
+         "name":"New CORS Profile",
+         "isDefault":false,
+         "origins":[
+            "*"
+         ],
+         "allowedHeaders":[
+            "Authorization"
+         ],
+         "exposedHeaders":[
+            "via"
+         ],
+         "supportCredentials":false,
+         "maxAgeSeconds":0
+      }
+   ], 
+   "clientOrganizations":[
+      "${orgName}",
+      "${orgName2}"
+   ], 
+   "applications":[
+      { "name":"${testAppName1}" },
+      { "name":"${testAppName2}" }
+   ]
+}

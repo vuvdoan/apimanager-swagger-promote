@@ -2,9 +2,13 @@ package com.axway.apim.swagger.api.properties.applications;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+@JsonFilter("IgnoreApplicationFields")
 public class ClientApplication {
 	private String id;
 	private String name;

@@ -1,16 +1,18 @@
 package com.axway.apim.test;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,8 @@ public class ImportTestAction extends AbstractTestAction {
 	public static String API_CONFIG = "apiConfig";
 	
 	private static Logger LOG = LoggerFactory.getLogger(ImportTestAction.class);
+
+	File testDir = null;
 	
 	@Override
 	public void doExecute(TestContext context) {
@@ -37,6 +41,7 @@ public class ImportTestAction extends AbstractTestAction {
 		String apiDefinition			= null;
 		String handleNullAsChange	= "false";
 		boolean useEnvironmentOnly = false;
+		testDir = createTestDirectory(context);
 		try {
 			stage 				= context.getVariable("stage");
 		} catch (CitrusRuntimeException ignore) {};
@@ -47,7 +52,7 @@ public class ImportTestAction extends AbstractTestAction {
 		}
 		String configFile = replaceDynamicContentInFile(origConfigFile, context, createTempFilename(origConfigFile));
 		LOG.info("Using Replaced Swagger-File: " + apiDefinition);
-		LOG.info("Using Replaced configFile-File: " + configFile);
+		LOG.info("Using Replaced Config-File: " + configFile);
 		LOG.info("API-Manager import is using user: '"+context.replaceDynamicContentInString("${oadminPassword1}")+"'");
 		int expectedReturnCode = 0;
 		try {
@@ -92,7 +97,7 @@ public class ImportTestAction extends AbstractTestAction {
 			// This creates the dynamic staging config file! (For testing, we also support reading out of a file directly)
 			replaceDynamicContentInFile(stageConfigFile, context, replacedStagedConfig);
 		}
-		copyAPIImageToTempDir(configFile, context);
+		copyImagesAndCertificates(origConfigFile, context);
 
 		String[] args;
 		if(useEnvironmentOnly) {
@@ -137,21 +142,16 @@ public class ImportTestAction extends AbstractTestAction {
 			if(is == null) {
 				throw new IOException("Unable to read swagger file from: " + pathToFile);
 			}
-			String jsonData = IOUtils.toString(is);
-			String filename = pathToFile.substring(pathToFile.lastIndexOf("/")+1); // e.g.: petstore.json, no-change-xyz-config.<stage>.json, 
+			String jsonData = IOUtils.toString(is, StandardCharsets.UTF_8); 
 
 			String jsonReplaced = context.replaceDynamicContentInString(jsonData);
 
 			os = new FileOutputStream(new File(replacedFilename));
-			IOUtils.write(jsonReplaced, os);
+			IOUtils.write(jsonReplaced, os, StandardCharsets.UTF_8);
 			
 			return replacedFilename;
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw new RuntimeException("Can't replace content in file", e);
 		} finally {
 			if(os!=null)
 				try {
@@ -161,14 +161,13 @@ public class ImportTestAction extends AbstractTestAction {
 					e.printStackTrace();
 				}
 		}
-		return null;
 	}
 	
 	private String createTempFilename(String origFilename) {
 		String prefix = origFilename.substring(0, origFilename.indexOf(".")+1);
 		String suffix = origFilename.substring(origFilename.indexOf("."));
 		try {
-			File tempFile = File.createTempFile(prefix, suffix);
+			File tempFile = File.createTempFile(prefix, suffix, testDir);
 			tempFile.deleteOnExit();
 			return tempFile.getAbsolutePath();
 		} catch (IOException e) {
@@ -177,20 +176,28 @@ public class ImportTestAction extends AbstractTestAction {
 		}
 	}
 	
-	private static void copyAPIImageToTempDir(String configFile, TestContext context) {
-		// If there is an image relative to original config-file, copy it into the temp dir
-		File configFileObject = new File(configFile); // This is the replaced config file
-		File apiImage;
+	private File createTestDirectory(TestContext context) {
+		int randomNum = ThreadLocalRandom.current().nextInt(1, 999 + 1);
+		String apiName = context.getVariable("apiName");
+		String testDirName = "ImportActionTest-" + apiName.replace(" ", "") + "-" + randomNum;
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		File testDir = new File(tmpDir + testDirName);
+		if(!testDir.mkdir()) {
+			throw new RuntimeException("Failed to create Test-Directory: " + tmpDir + testDirName);
+		}
+		LOG.info("Successfully created Test-Directory: "+tmpDir + testDirName);
+		return testDir;
+	}
+	
+	private void copyImagesAndCertificates(String origConfigFile, TestContext context) {
+		File sourceDir = new File(origConfigFile).getParentFile();
+		if(!sourceDir.exists()) return;
+		FileFilter filter = new WildcardFileFilter(new String[] {"*.crt", "*.jpg", "*.png"});
 		try {
-			apiImage = new File(context.getVariable("image"));
-		} catch (Exception ignore) { return; } // No image configured, nothing to do
-		if(apiImage.exists()) {
-			try {
-				Files.copy(apiImage.toPath(), new File(configFileObject.getParent()+"/"+apiImage.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException e) {
-				LOG.error("Can't copy api-image into working directory");
-				throw new RuntimeException();
-			}
+			LOG.info("Copy certificates and images from source: "+sourceDir+" into test-dir: '"+testDir+"'");
+			FileUtils.copyDirectory(sourceDir, testDir, filter);
+		} catch (IOException e) {
+			
 		}
 	}
 }

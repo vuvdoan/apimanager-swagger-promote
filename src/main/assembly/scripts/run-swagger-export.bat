@@ -23,11 +23,11 @@ SET ERRNO=1
 GOTO :END
 
 :OkClassPath
-ECHO "Running API-Manager Promote version 1.5.0 ..."
+ECHO "Running API-Manager Promote version 1.5.0 - Export ..."
 
 CD %currentDir%
 
-"%JAVA_HOME%\bin\java" -Xms64m -Xmx256m -classpath "%CLASSPATH%" com.axway.apim.ImportApp %*
+"%JAVA_HOME%\bin\java" -Xms64m -Xmx256m -classpath "%CLASSPATH%" com.axway.apim.ExportApp %*
 SET ERRNO=%ERRORLEVEL%
 IF %ERRNO% EQU 10 (
   ECHO "No changes detected. Existing with RC: 0"

@@ -22,7 +22,9 @@ import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.lib.ErrorState;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class OutboundProfile {
 	
 	protected static Logger LOG = LoggerFactory.getLogger(OutboundProfile.class);
@@ -128,41 +130,73 @@ public class OutboundProfile {
 	public String getRequestPolicy() {
 		return requestPolicy;
 	}
-
+	
 	public void setRequestPolicy(String requestPolicy) throws AppException {
-		if(requestPolicy!=null && !requestPolicy.startsWith("<")) 
-			requestPolicy = getPolicy(apimRequestPolicies, requestPolicy, "request");
-		this.requestPolicy = requestPolicy;
+		setRequestPolicy(requestPolicy, true);
+	}
+
+	public void setRequestPolicy(String requestPolicy, boolean parseInternal) throws AppException {
+		if(!parseInternal) {
+			this.requestPolicy = requestPolicy;
+		} else {
+			if(requestPolicy!=null && !requestPolicy.startsWith("<")) 
+				requestPolicy = getPolicy(apimRequestPolicies, requestPolicy, "request");
+			this.requestPolicy = requestPolicy;
+		}
 	}
 
 	public String getResponsePolicy() {
 		return responsePolicy;
 	}
-
+	
 	public void setResponsePolicy(String responsePolicy) throws AppException {
-		if(responsePolicy!=null && !responsePolicy.startsWith("<")) 
-			responsePolicy = getPolicy(apimResponsePolicies, responsePolicy, "response");
-		this.responsePolicy = responsePolicy;
+		setResponsePolicy(responsePolicy, true);
+	}
+
+	public void setResponsePolicy(String responsePolicy, boolean parseInternal) throws AppException {
+		if(!parseInternal) {
+			this.responsePolicy = responsePolicy;
+		} else {
+			if(responsePolicy!=null && !responsePolicy.startsWith("<")) 
+				responsePolicy = getPolicy(apimResponsePolicies, responsePolicy, "response");
+			this.responsePolicy = responsePolicy;
+		}
 	}
 
 	public String getRoutePolicy() {
 		return routePolicy;
 	}
-
+	
 	public void setRoutePolicy(String routePolicy) throws AppException {
-		if(routePolicy!=null && !routePolicy.startsWith("<")) 
-			routePolicy = getPolicy(apimRoutingPolicies, routePolicy, "routing");
-		this.routePolicy = routePolicy;
+		setRoutePolicy(routePolicy, true);
+	}
+
+	public void setRoutePolicy(String routePolicy, boolean parseInternal) throws AppException {
+		if(!parseInternal) {
+			this.routePolicy = routePolicy;
+		} else {
+			if(routePolicy!=null && !routePolicy.startsWith("<")) 
+				routePolicy = getPolicy(apimRoutingPolicies, routePolicy, "routing");
+			this.routePolicy = routePolicy;
+		}
 	}
 
 	public String getFaultHandlerPolicy() {
 		return faultHandlerPolicy;
 	}
-
+	
 	public void setFaultHandlerPolicy(String faultHandlerPolicy) throws AppException {
-		if(faultHandlerPolicy!=null && !faultHandlerPolicy.startsWith("<")) 
-			faultHandlerPolicy = getPolicy(apimFaultHandlerPolicies, faultHandlerPolicy, "fault handler");
-		this.faultHandlerPolicy = faultHandlerPolicy;
+		setFaultHandlerPolicy(faultHandlerPolicy, true);
+	}
+
+	public void setFaultHandlerPolicy(String faultHandlerPolicy, boolean parseInternal) throws AppException {
+		if(!parseInternal) {
+			this.faultHandlerPolicy = faultHandlerPolicy;
+		} else {
+			if(faultHandlerPolicy!=null && !faultHandlerPolicy.startsWith("<")) 
+				faultHandlerPolicy = getPolicy(apimFaultHandlerPolicies, faultHandlerPolicy, "fault handler");
+			this.faultHandlerPolicy = faultHandlerPolicy;
+		}
 	}
 
 	public String getApiMethodId() {

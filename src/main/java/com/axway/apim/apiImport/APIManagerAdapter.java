@@ -43,7 +43,10 @@ import com.axway.apim.swagger.api.properties.APIDefintion;
 import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.apiAccess.APIAccess;
 import com.axway.apim.swagger.api.properties.applications.ClientApplication;
+import com.axway.apim.swagger.api.properties.authenticationProfiles.AuthType;
+import com.axway.apim.swagger.api.properties.authenticationProfiles.AuthenticationProfile;
 import com.axway.apim.swagger.api.properties.cacerts.CaCert;
+import com.axway.apim.swagger.api.properties.corsprofiles.CorsProfile;
 import com.axway.apim.swagger.api.properties.inboundprofiles.InboundProfile;
 import com.axway.apim.swagger.api.properties.organization.ApiAccess;
 import com.axway.apim.swagger.api.properties.organization.Organization;
@@ -275,6 +278,7 @@ public class APIManagerAdapter {
 		IAPI apiManagerApi;
 		try {
 			apiManagerApi = mapper.readValue(jsonConfiguration.toString(), ActualAPI.class);
+			((ActualAPI)apiManagerApi).setApiConfiguration(jsonConfiguration);
 			apiManagerApi.setAPIDefinition(getOriginalAPIDefinitionFromAPIM(apiManagerApi.getApiId()));
 			if(apiManagerApi.getImage()!=null) {
 				((ActualAPI)apiManagerApi).setImage(getAPIImageFromAPIM(apiManagerApi.getId())); 
@@ -294,9 +298,11 @@ public class APIManagerAdapter {
 				((AbstractAPI)apiManagerApi).setCustomProperties(customProperties);
 			}
 			addQuotaConfiguration(apiManagerApi, desiredAPI);
-			handleOutboundProfile(apiManagerApi);
-			handleInboundProfile(apiManagerApi);
-			handleTags(apiManagerApi);
+			handleDefaultAuthenticationProfile(apiManagerApi);
+			handleDefaultOutboundProfile(apiManagerApi);
+			handleDefaultInboundProfile(apiManagerApi);
+			handleDefaultCors(apiManagerApi);
+			handleNoTagsConfigured(apiManagerApi);
 			addClientOrganizations(apiManagerApi, desiredAPI);
 			addClientApplications(apiManagerApi, desiredAPI);
 			return apiManagerApi;
@@ -462,7 +468,7 @@ public class APIManagerAdapter {
 		return null;
 	}
 	
-	private static void handleOutboundProfile(IAPI actualAPI) {
+	private static void handleDefaultOutboundProfile(IAPI actualAPI) {
 		if(actualAPI.getOutboundProfiles()==null) return;
 		OutboundProfile profile = actualAPI.getOutboundProfiles().get("_default");
 		if(		profile.getRouteType().equals("proxy") && 
@@ -472,11 +478,34 @@ public class APIManagerAdapter {
 				profile.getFaultHandlerPolicy()==null && 
 				profile.getAuthenticationProfile().equals("_default")
 				) 
-			// There is only the DEFAULT outbound profile configured in API-Manager. That means: Nothing!
+			// There is only the default Outbound-Profile configured - Reset it!
 			((ActualAPI)actualAPI).setOutboundProfiles(null);
 	}
 	
-	private static void handleInboundProfile(IAPI actualAPI) {
+	private static void handleDefaultAuthenticationProfile(IAPI actualAPI) {
+		if(actualAPI.getAuthenticationProfiles()==null) return;
+		AuthenticationProfile profile = actualAPI.getAuthenticationProfiles().get(0);
+		if(profile.getType().equals(AuthType.none)) {
+			// There is only the default Authentication-Profile configured - Reset it!
+			((ActualAPI)actualAPI).setAuthenticationProfiles(null);
+		}
+	}
+	
+	
+	private static void handleDefaultCors(IAPI actualAPI) {
+		if(actualAPI.getCorsProfiles() ==null) return;
+		CorsProfile profile = actualAPI.getCorsProfiles().get(0);
+		if(		profile.getAllowedHeaders().length == 0 &&
+				(profile.getExposedHeaders().length == 1 && profile.getExposedHeaders()[0].equals("X-CorrelationID")) &&
+				(profile.getOrigins().length == 1 && profile.getOrigins()[0].equals("*")) &&
+				profile.getSupportCredentials().equals("false") && 
+				profile.getMaxAgeSeconds().equals("0")
+				) 
+			// There is only the default CORS-Profile configured - Reset it!
+			((ActualAPI)actualAPI).setCorsProfiles(null);
+	}
+	
+	private static void handleDefaultInboundProfile(IAPI actualAPI) {
 		if(actualAPI.getInboundProfiles()==null) return;
 		InboundProfile profile = actualAPI.getInboundProfiles().get("_default");
 		if(		profile.getSecurityProfile().equals("_default") && 
@@ -484,11 +513,12 @@ public class APIManagerAdapter {
 				profile.getMonitorAPI().equals("true") &&
 				profile.getMonitorSubject().equals("authentication.subject.id")
 				) 
-			// There is only the DEFAULT inbound profile configured in API-Manager. That means: Nothing!
+			// There is only the default Inbound-Profile configured - Reset it!
 			((ActualAPI)actualAPI).setInboundProfiles(null);
 	}
 	
-	private static void handleTags(IAPI actualAPI) {
+	
+	private static void handleNoTagsConfigured(IAPI actualAPI) {
 		if(actualAPI.getTags()==null) return;
 		TagMap<String, String[]> tags = actualAPI.getTags();
 		if(tags.size()==0) {
@@ -829,8 +859,13 @@ public class APIManagerAdapter {
 					.build();
 			POSTRequest postRequest = new POSTRequest(entity, uri, null);
 			postRequest.setContentType(null);
-			HttpEntity response = postRequest.execute().getEntity();
-			JsonNode jsonResponse = mapper.readTree(response.getContent());
+			HttpResponse httpResponse = postRequest.execute();
+			int statusCode = httpResponse.getStatusLine().getStatusCode();
+			if( statusCode != 200){
+				LOG.error("Can't decode provided certificate. Message: '"+EntityUtils.toString(httpResponse.getEntity())+"' Response-Code: "+statusCode+"");
+				throw new AppException("Can't decode provided certificate: " + cert.getCertFile(), ErrorCode.API_MANAGER_COMMUNICATION);
+			}
+			JsonNode jsonResponse = mapper.readTree(httpResponse.getEntity().getContent());
 			return jsonResponse;
 		} catch (Exception e) {
 			throw new AppException("Can't read certificate information from API-Manager.", ErrorCode.API_MANAGER_COMMUNICATION, e);

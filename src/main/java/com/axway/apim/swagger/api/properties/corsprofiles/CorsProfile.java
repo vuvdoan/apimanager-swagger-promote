@@ -77,6 +77,13 @@ public class CorsProfile {
 	}
 	
 	@Override
+	public String toString() {
+		return "CorsProfile [name=" + name + ", origins=" + Arrays.toString(origins) + ", allowedHeaders="
+				+ Arrays.toString(allowedHeaders) + ", exposedHeaders=" + Arrays.toString(exposedHeaders)
+				+ ", supportCredentials=" + supportCredentials + ", maxAgeSeconds=" + maxAgeSeconds + "]";
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		if(other == null) return false;
 		if(other instanceof CorsProfile) {

@@ -8,7 +8,6 @@ import com.axway.apim.lib.AppException;
 import com.axway.apim.swagger.api.properties.APIDefintion;
 import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.applications.ClientApplication;
-import com.axway.apim.swagger.api.properties.authenticationProfiles.AuthType;
 import com.axway.apim.swagger.api.properties.authenticationProfiles.AuthenticationProfile;
 import com.axway.apim.swagger.api.properties.cacerts.CaCert;
 import com.axway.apim.swagger.api.properties.corsprofiles.CorsProfile;
@@ -24,7 +23,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-@JsonPropertyOrder({ "name", "path", "state", "version", "organization", "image", "backendBasepath" })
+@JsonPropertyOrder({ "name", "path", "state", "version", "organization", "descriptionType", "descriptionManual", "vhost", 
+	"backendBasepath", "image", "securityProfiles", "outboundProfiles", "authenticationProfiles", "tags", "customProperties", 
+	"corsProfiles", "caCerts", "applicationQuota", "systemQuota" })
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class ExportAPI {
 	
@@ -62,8 +63,22 @@ public class ExportAPI {
 	}
 
 	
-	public Map<String, OutboundProfile> getOutboundProfiles() {
+	public Map<String, OutboundProfile> getOutboundProfiles() throws AppException {
+		if(this.actualAPIProxy.getOutboundProfiles()==null) return null;
+		OutboundProfile profile = this.actualAPIProxy.getOutboundProfiles().get("_default");
+		if(profile.getRequestPolicy()!=null) profile.setRequestPolicy(getExternalPolicyName(profile.getRequestPolicy()), false);
+		if(profile.getResponsePolicy()!=null) profile.setResponsePolicy(getExternalPolicyName(profile.getResponsePolicy()), false);
+		if(profile.getRoutePolicy()!=null) profile.setRoutePolicy(getExternalPolicyName(profile.getRoutePolicy()), false);
+		if(profile.getFaultHandlerPolicy()!=null) profile.setFaultHandlerPolicy(getExternalPolicyName(profile.getFaultHandlerPolicy()), false);
 		return this.actualAPIProxy.getOutboundProfiles();
+	}
+	
+	private static String getExternalPolicyName(String policy) {
+		if(policy.startsWith("<key")) {
+			policy = policy.substring(policy.indexOf("<key type='FilterCircuit'>"));
+			policy = policy.substring(policy.indexOf("value='")+7, policy.lastIndexOf("'/></key></key>"));
+		}
+		return policy;
 	}
 
 	
@@ -75,7 +90,6 @@ public class ExportAPI {
 
 	
 	public List<AuthenticationProfile> getAuthenticationProfiles() {
-		if(this.actualAPIProxy.getAuthenticationProfiles().get(0).getType().equals(AuthType.none)) return null;
 		return this.actualAPIProxy.getAuthenticationProfiles();
 	}
 
@@ -183,20 +197,9 @@ public class ExportAPI {
 		return this.actualAPIProxy.getDescriptionUrl();
 	}
 
-
-	
-	@JsonIgnore
 	public List<CaCert> getCaCerts() {
-		boolean hasCert = false;
 		if(this.actualAPIProxy.getCaCerts()==null) return null;
 		if(this.actualAPIProxy.getCaCerts().size()==0) return null;
-		for(CaCert cert : this.actualAPIProxy.getCaCerts()) {
-			if(cert.getAlias()!=null || !cert.getAlias().equals("")) {
-				hasCert = true;
-				break;
-			}
-		}
-		if(!hasCert) return null;
 		return this.actualAPIProxy.getCaCerts();
 	}
 

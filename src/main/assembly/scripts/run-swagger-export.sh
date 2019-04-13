@@ -17,9 +17,9 @@ do
         CP=$CP:$jars
 done
 
-echo "Running API-Manager Promote version 1.5.0 ..."
+echo "Running API-Manager Promote version 1.5.0 - Export ..."
 
-"$JAVA_HOME/bin/java" -Xms64m -Xmx256m -classpath "$CP" com.axway.apim.ImportApp $*
+"$JAVA_HOME/bin/java" -Xms64m -Xmx256m -classpath "$CP" com.axway.apim.ExportApp $*
 rc=$?
 if [ $rc -eq 10 ];then
         echo "No changes detected. Existing with RC: 0"

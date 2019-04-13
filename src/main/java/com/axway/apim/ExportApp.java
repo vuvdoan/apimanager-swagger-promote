@@ -46,8 +46,8 @@ public class ExportApp {
 			option = new Option("a", "api-path", true, "Define the APIs to be exported, based on the exposure path.\n"
 					+ "You can use wildcards to export multiple APIs:\n"
 					+ "-a /api/v1/my/great/api     : Export a specific API\n"
-					+ "-a *                        : Export all APIs\n"
-					+ "-a /api/v1/any*             : Export all APIs with this prefix\n"
+					+ "-a *                        : Export all APIs (Not yet supported)\n"
+					+ "-a /api/v1/any*             : Export all APIs with this prefix (Not yet supported)\n"
 					+ "-a /api/v1/*/some/other/api : Even that is possible\n");
 				option.setRequired(true);
 				option.setArgName("/api/v1/my/great/api");
@@ -106,7 +106,7 @@ public class ExportApp {
 			}
 			
 			LOG.info("------------------------------------------------------------------------");
-			LOG.info("API-Manager Promote Version: 1.5.0 - Export");
+			LOG.info("API-Manager Promote Version: 1.5.0 - E X P O R T");
 			LOG.info("                                                                        ");
 			LOG.info("To report issues or get help, please visit: ");
 			LOG.info("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote");

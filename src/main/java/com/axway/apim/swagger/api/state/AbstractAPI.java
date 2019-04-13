@@ -242,6 +242,10 @@ public abstract class AbstractAPI {
 	public List<CorsProfile> getCorsProfiles() {
 		return corsProfiles;
 	}
+	
+	public void  setCorsProfiles(List<CorsProfile> corsProfiles) {
+		this.corsProfiles = corsProfiles;
+	}
 
 	public String getVhost() {
 		return vhost;

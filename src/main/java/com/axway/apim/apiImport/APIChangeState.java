@@ -226,7 +226,7 @@ public class APIChangeState {
 		if(actualValue instanceof List) {
 			if(handleNullAsChanges && 
 					(actualValue!=null && desiredValue==null)) { 
-				return true;
+				return false;
 			} else {
 				return ((List<?>)actualValue).size() == ((List<?>)desiredValue).size() && 
 						((List<?>)actualValue).containsAll((List<?>)desiredValue) && 
