@@ -145,7 +145,7 @@ public class ImportApp {
 			LOG.info("                                                                        ");
 			LOG.info("To report issues or get help, please visit: ");
 			LOG.info("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote");
-			LOG.info("N O T E:");
+			LOG.info("N E W:");
 			LOG.info("Use Swagger-Export to export your existing APIs");
 			LOG.info("------------------------------------------------------------------------");
 			
@@ -208,7 +208,7 @@ public class ImportApp {
 		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -c samples/minimal-config-api-definition.json -s api-env");
 		System.out.println();
 		System.out.println("You can use Swagger-Export to export existing APIs from a running API-Manager. Example:");
-		System.out.println("scripts"+File.separator+"run-swagger-export."+scriptExt+" -a /api/v1/myapi -l my_apis -h location - u apiadmin -p changeme");
+		System.out.println("scripts"+File.separator+"run-swagger-export."+scriptExt+" -a /api/v1/ -l my_apis -h location -u apiadmin -p changeme");
 		System.out.println();
 		System.out.println("For more information visit: https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/wiki");
 	}

@@ -599,6 +599,7 @@ public class APIManagerAdapter {
 		CommandParameters cmd = CommandParameters.getInstance();
 		ObjectMapper mapper = new ObjectMapper();
 		URI uri;
+		if(apiPath.endsWith("/")) apiPath = apiPath.substring(0, apiPath.length()-1);
 		try {
 			uri = new URIBuilder(cmd.getAPIManagerURL()).setPath(RestAPICall.API_VERSION + "/proxies").build();
 			RestAPICall getRequest = new GETRequest(uri, null);

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.axway.apim.apiImport.APIManagerAdapter;
 import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.ErrorCode;
+import com.axway.apim.lib.ErrorState;
 import com.axway.apim.swagger.api.properties.APIDefintion;
 import com.axway.apim.swagger.api.properties.APIImage;
 import com.axway.apim.swagger.api.properties.cacerts.CaCert;
@@ -60,6 +61,10 @@ public class APIExportConfigAdapter {
 		ExportAPI exportAPI = null;
 		if (!this.exportApiPath.contains("*")) {
 			JsonNode mgrAPI = apiManager.getExistingAPI(this.exportApiPath);
+			if(mgrAPI==null) {
+				ErrorState.getInstance().setError("No API found for: '" + this.exportApiPath + "'", ErrorCode.UNKNOWN_API, false);
+				throw new AppException("No API found for: '" + this.exportApiPath + "'", ErrorCode.UNKNOWN_API);
+			}
 			IAPI actualAPI = apiManager.getAPIManagerAPI(mgrAPI, getAPITemplate());
 			handleCustomProperties(actualAPI);
 			exportAPI = new ExportAPI(actualAPI);
@@ -72,10 +77,15 @@ public class APIExportConfigAdapter {
 
 	private void saveAPILocally(ExportAPI exportAPI) throws AppException {
 		String apiPath = getAPIExportFolder(exportAPI.getPath());
-		File localFolder = new File(this.localFolder + apiPath);
+		File localFolder = new File(this.localFolder +File.separator+ apiPath);
+		if(localFolder.exists()) {
+			ErrorState.getInstance().setError("Local export folder: " + localFolder + " already exists.", ErrorCode.EXPORT_FOLDER_EXISTS, false);
+			throw new AppException("Local export folder: " + localFolder + " already exists.", ErrorCode.EXPORT_FOLDER_EXISTS);
+		}
 		if (!localFolder.mkdirs()) {
 			throw new AppException("Cant create export folder", ErrorCode.UNXPECTED_ERROR);
 		}
+		LOG.info("Going to export API into folder: " + localFolder);
 		APIDefintion apiDef = exportAPI.getAPIDefinition();
 		String targetFile = null;
 		try {
@@ -101,7 +111,7 @@ public class APIExportConfigAdapter {
 		}
 		APIImage image = exportAPI.getAPIImage();
 		if(image!=null) {
-			writeBytesToFile(image.getImageContent(), localFolder+"/" + image.getBaseFilename()+image.getFileExtension());
+			writeBytesToFile(image.getImageContent(), localFolder+File.separator + image.getBaseFilename()+image.getFileExtension());
 		}
 		if(exportAPI.getCaCerts()!=null && !exportAPI.getCaCerts().isEmpty()) {
 			storeCaCerts(localFolder, exportAPI.getCaCerts());
@@ -177,6 +187,7 @@ public class APIExportConfigAdapter {
 	
 	private void prepareToSave(ExportAPI exportAPI) throws AppException {
 		// Clean-Up some internal fields in Outbound-Profiles
+		if(exportAPI.getOutboundProfiles()==null) return;
 		OutboundProfile profile = exportAPI.getOutboundProfiles().get("_default");
 		profile.setApiId(null);
 		profile.setApiMethodId(null);
