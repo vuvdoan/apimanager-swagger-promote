@@ -181,11 +181,11 @@ public class ImportTestAction extends AbstractTestAction {
 		String apiName = context.getVariable("apiName");
 		String testDirName = "ImportActionTest-" + apiName.replace(" ", "") + "-" + randomNum;
 		String tmpDir = System.getProperty("java.io.tmpdir");
-		File testDir = new File(tmpDir + testDirName);
+		File testDir = new File(tmpDir + File.separator + testDirName);
 		if(!testDir.mkdir()) {
-			throw new RuntimeException("Failed to create Test-Directory: " + tmpDir + testDirName);
+			throw new RuntimeException("Failed to create Test-Directory: " + tmpDir + File.separator + testDirName);
 		}
-		LOG.info("Successfully created Test-Directory: "+tmpDir + testDirName);
+		LOG.info("Successfully created Test-Directory: "+tmpDir + File.separator + testDirName);
 		return testDir;
 	}
 	
