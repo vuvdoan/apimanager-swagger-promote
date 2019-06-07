@@ -16,6 +16,8 @@ public enum ErrorCode {
 	CANT_UPDATE_API_PROXY		(45, "Can't update API-Proxy."),
 	CANT_UPDATE_QUOTA_CONFIG	(47, "Can't update Quota-Configuration."),
 	CANT_UPDATE_API_STATUS		(50, "Can't update the API-Status."),
+	QUERY_STRING_ROUTING_DISABLED		(53, "Query-String routing not enabled"),
+	API_CONFIG_REQUIRES_QUERY_STRING		(54, "API-Config needs query string, as API-Manager has it enabled."),
 	CANT_UPGRADE_API_ACCESS		(55, "Can't upgrade API-Access"),
 	UNKNOWN_API					(56, "API is unknown / not found, etc."),
 	UNKNOWN_ORGANIZATION		(57, "Unknown organization given. Please check the API-Config-File."),

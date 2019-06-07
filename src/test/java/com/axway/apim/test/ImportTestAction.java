@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang.StringUtils;
@@ -25,14 +24,14 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.ValidationException;
 
 public class ImportTestAction extends AbstractTestAction {
-	
+
 	public static String API_DEFINITION = "apiDefinition";
 	public static String API_CONFIG = "apiConfig";
-	
+
 	private static Logger LOG = LoggerFactory.getLogger(ImportTestAction.class);
 
 	File testDir = null;
-	
+
 	@Override
 	public void doExecute(TestContext context) {
 		String origApiDefinition 			= context.getVariable(API_DEFINITION);
@@ -52,23 +51,23 @@ public class ImportTestAction extends AbstractTestAction {
 		}
 		String configFile = replaceDynamicContentInFile(origConfigFile, context, createTempFilename(origConfigFile));
 		LOG.info("Using Replaced Swagger-File: " + apiDefinition);
-		LOG.info("Using Replaced Config-File: " + configFile);
-		LOG.info("API-Manager import is using user: '"+context.replaceDynamicContentInString("${oadminPassword1}")+"'");
+		LOG.info("Using Replaced configFile-File: " + configFile);
+		LOG.info("API-Manager import is using user: '"+context.replaceDynamicContentInString("${oadminUsername1}")+"'");
 		int expectedReturnCode = 0;
 		try {
 			expectedReturnCode 	= Integer.parseInt(context.getVariable("expectedReturnCode"));
 		} catch (Exception ignore) {};
-		
+
 		try {
 			useEnvironmentOnly 	= Boolean.parseBoolean(context.getVariable("useEnvironmentOnly"));
 		} catch (Exception ignore) {};
-		
+
 		String enforce = "false";
 		String ignoreQuotas = "false";
 		String ignoreAdminAccount = "false";
-		String clientOrgsMode = CommandParameters.MODE_REPLACE;
-		String clientAppsMode = CommandParameters.MODE_REPLACE;;
-		
+		String clientOrgsMode = CommandParameters.MODE_ADD;
+		String clientAppsMode = CommandParameters.MODE_ADD;;
+
 		try {
 			enforce = context.getVariable("enforce");
 		} catch (Exception ignore) {};
@@ -87,7 +86,7 @@ public class ImportTestAction extends AbstractTestAction {
 		try {
 			handleNullAsChange 	= context.getVariable("handleNullAsChange");
 		} catch (Exception ignore) {};
-		
+
 		if(stage==null) {
 			stage = "NOT_SET";
 		} else {
@@ -101,21 +100,21 @@ public class ImportTestAction extends AbstractTestAction {
 
 		String[] args;
 		if(useEnvironmentOnly) {
-			args = new String[] {  
+			args = new String[] {
 					"-c", configFile, "-s", stage};
 		} else {
-			args = new String[] { 
-					"-a", apiDefinition, 
-					"-c", configFile, 
-					"-h", context.replaceDynamicContentInString("${apiManagerHost}"), 
-					"-p", context.replaceDynamicContentInString("${oadminUsername1}"), 
-					"-u", context.replaceDynamicContentInString("${oadminPassword1}"),
-					"-s", stage, 
-					"-f", enforce, 
-					"-iq", ignoreQuotas, 
-					"-clientOrgsMode", clientOrgsMode, 
-					"-clientAppsMode", clientAppsMode, 
-					"-ignoreAdminAccount", ignoreAdminAccount, 
+			args = new String[] {
+					"-a", apiDefinition,
+					"-c", configFile,
+					"-h", context.replaceDynamicContentInString("${apiManagerHost}"),
+					"-u", context.replaceDynamicContentInString("${oadminUsername1}"),
+					"-p", context.replaceDynamicContentInString("${oadminPassword1}"),
+					"-s", stage,
+					"-f", enforce,
+					"-iq", ignoreQuotas,
+					"-clientOrgsMode", clientOrgsMode,
+					"-clientAppsMode", clientAppsMode,
+					"-ignoreAdminAccount", ignoreAdminAccount,
 					"-handleNullAsChange", handleNullAsChange};
 		}
 		LOG.info("Ignoring admin account: '"+ignoreAdminAccount+"' | Enforce breaking change: " + enforce + " | useEnvironmentOnly: " + useEnvironmentOnly);
@@ -124,17 +123,17 @@ public class ImportTestAction extends AbstractTestAction {
 			throw new ValidationException("Expected RC was: " + expectedReturnCode + " but got: " + rc);
 		}
 	}
-	
+
 	/**
 	 * To make testing easier we allow reading test-files from classpath as well
 	 */
 	private String replaceDynamicContentInFile(String pathToFile, TestContext context, String replacedFilename) {
-		
+
 		File inputFile = new File(pathToFile);
 		InputStream is = null;
 		OutputStream os = null;
 		try {
-			if(inputFile.exists()) { 
+			if(inputFile.exists()) {
 				is = new FileInputStream(pathToFile);
 			} else {
 				is = this.getClass().getResourceAsStream(pathToFile);
@@ -142,13 +141,13 @@ public class ImportTestAction extends AbstractTestAction {
 			if(is == null) {
 				throw new IOException("Unable to read swagger file from: " + pathToFile);
 			}
-			String jsonData = IOUtils.toString(is, StandardCharsets.UTF_8); 
+			String jsonData = IOUtils.toString(is, StandardCharsets.UTF_8);
 
 			String jsonReplaced = context.replaceDynamicContentInString(jsonData);
 
 			os = new FileOutputStream(new File(replacedFilename));
 			IOUtils.write(jsonReplaced, os, StandardCharsets.UTF_8);
-			
+
 			return replacedFilename;
 		} catch (Exception e) {
 			throw new RuntimeException("Can't replace content in file", e);
@@ -162,7 +161,7 @@ public class ImportTestAction extends AbstractTestAction {
 				}
 		}
 	}
-	
+
 	private String createTempFilename(String origFilename) {
 		String prefix = origFilename.substring(0, origFilename.indexOf(".")+1);
 		String suffix = origFilename.substring(origFilename.indexOf("."));
@@ -175,7 +174,7 @@ public class ImportTestAction extends AbstractTestAction {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private File createTestDirectory(TestContext context) {
 		int randomNum = ThreadLocalRandom.current().nextInt(1, 999 + 1);
 		String apiName = context.getVariable("apiName");
@@ -188,7 +187,7 @@ public class ImportTestAction extends AbstractTestAction {
 		LOG.info("Successfully created Test-Directory: "+tmpDir + File.separator + testDirName);
 		return testDir;
 	}
-	
+
 	private void copyImagesAndCertificates(String origConfigFile, TestContext context) {
 		File sourceDir = new File(origConfigFile).getParentFile();
 		if(!sourceDir.exists()) return;
@@ -197,7 +196,7 @@ public class ImportTestAction extends AbstractTestAction {
 			LOG.info("Copy certificates and images from source: "+sourceDir+" into test-dir: '"+testDir+"'");
 			FileUtils.copyDirectory(sourceDir, testDir, filter);
 		} catch (IOException e) {
-			
+
 		}
 	}
 }

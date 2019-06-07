@@ -37,6 +37,7 @@ import com.axway.apim.lib.AppException;
 import com.axway.apim.lib.CommandParameters;
 import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.lib.ErrorState;
+import com.axway.apim.lib.URLParser;
 import com.axway.apim.lib.Utils;
 import com.axway.apim.swagger.api.properties.APIDefintion;
 import com.axway.apim.swagger.api.properties.applications.ClientApplication;
@@ -56,36 +57,36 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.MissingNode;
 
 /**
- * The APIConfig reflects the given API-Configuration plus the API-Definition, which is either a 
+ * The APIConfig reflects the given API-Configuration plus the API-Definition, which is either a
  * Swagger-File or a WSDL.
  * This class will read the API-Configuration plus the optional set stage and the API-Definition.
- * 
+ *
  * @author cwiechmann
  */
 public class APIImportConfigAdapter {
-	
+
 	private static Logger LOG = LoggerFactory.getLogger(APIImportConfigAdapter.class);
-	
+
 	private ObjectMapper mapper = new ObjectMapper();
-	
+
 
 	/** This is the given path to WSDL or Swagger using -a parameter */
 	private String pathToAPIDefinition;
-	
+
 	/** The API-Config-File given by the user with -c parameter */
 	private String apiConfigFile;
-	
+
 	/** The APIConfig instance created by the APIConfigImporter */
 	private IAPI apiConfig;
-	
+
 	/** If true, an OrgAdminUser is used to start the tool */
 	private boolean usingOrgAdmin;
-	
+
 	private ErrorState error = ErrorState.getInstance();
 
 
 	/**
-	 * Constructs the APIImportConfig 
+	 * Constructs the APIImportConfig
 	 * @param apiConfig
 	 * @param stage
 	 * @param pathToAPIDefinition
@@ -102,8 +103,13 @@ public class APIImportConfigAdapter {
 			baseConfig = mapper.readValue(new File(apiConfigFile), DesiredAPI.class);
 			ObjectReader updater = mapper.readerForUpdating(baseConfig);
 			if(getStageConfig(stage, apiConfigFile)!=null) {
-				LOG.info("Overriding configuration from: " + getStageConfig(stage, apiConfigFile));
-				apiConfig = updater.readValue(new File(getStageConfig(stage, apiConfigFile)));
+				try {
+					apiConfig = updater.readValue(new File(getStageConfig(stage, apiConfigFile)));
+					LOG.info("Loaded stage API-Config from file: " + getStageConfig(stage, apiConfigFile));
+				} catch (FileNotFoundException e) {
+					LOG.debug("No config file found for stage: '"+stage+"'");
+					apiConfig = baseConfig;
+				}
 			} else {
 				apiConfig = baseConfig;
 			}
@@ -124,10 +130,10 @@ public class APIImportConfigAdapter {
 	 * <li>the API-Definition is read</li>
 	 * <li>Additionally some validations & completions are made here</li>
 	 * <li>in the future: This is the place to do some default handling.
-	 * 
-	 * @return IAPIDefintion with the desired state of the API. This state will be 
+	 *
+	 * @return IAPIDefintion with the desired state of the API. This state will be
 	 * the input to create the APIChangeState.
-	 * 
+	 *
 	 * @throws AppException if the state can't be created.
 	 * @see {@link IAPI}, {@link AbstractAPI}
 	 */
@@ -144,6 +150,7 @@ public class APIImportConfigAdapter {
 			validateDescription(apiConfig);
 			validateCorsConfig(apiConfig);
 			validateOutboundAuthN(apiConfig);
+			validateHasQueryStringKey(apiConfig);
 			completeCaCerts(apiConfig);
 			addQuotaConfiguration(apiConfig);
 			handleAllOrganizations(apiConfig);
@@ -156,12 +163,17 @@ public class APIImportConfigAdapter {
 			throw new AppException("Cannot validate/fulfill configuration file.", ErrorCode.CANT_READ_CONFIG_FILE, e);
 		}
 	}
-	
+
 	private void validateOrganization(IAPI apiConfig) throws AppException {
 		if(usingOrgAdmin) { // Hardcode the orgId to the organization of the used OrgAdmin
 			apiConfig.setOrganizationId(APIManagerAdapter.getCurrentUser(false).getOrganizationId());
 		} else {
-			apiConfig.setOrganizationId(APIManagerAdapter.getInstance().getOrgId(apiConfig.getOrganization()));
+			String desiredOrgId = APIManagerAdapter.getInstance().getOrgId(apiConfig.getOrganization(), true);
+			if(desiredOrgId==null) {
+				error.setError("The given organization: '"+apiConfig.getOrganization()+"' is either unknown or hasn't the Development flag.", ErrorCode.UNKNOWN_ORGANIZATION, false);
+				throw new AppException("The given organization: '"+apiConfig.getOrganization()+"' is either unknown or hasn't the Development flag.", ErrorCode.UNKNOWN_ORGANIZATION);
+			}
+			apiConfig.setOrgId(desiredOrgId);
 		}
 	}
 
@@ -183,7 +195,7 @@ public class APIImportConfigAdapter {
 		String s = currentRelativePath.toAbsolutePath().toString();
 		return s;
 	}
-	
+
 	private void handleAllOrganizations(IAPI apiConfig) throws AppException {
 		if(apiConfig.getClientOrganizations()==null) return;
 		if(apiConfig.getState()==IAPI.STATE_UNPUBLISHED) return;
@@ -197,21 +209,21 @@ public class APIImportConfigAdapter {
 			apiConfig.getClientOrganizations().addAll(allDesiredOrgs);
 			((DesiredAPI)apiConfig).setRequestForAllOrgs(true);
 		} else {
-			// As the API-Manager internally handles the owning organization in the same way, 
+			// As the API-Manager internally handles the owning organization in the same way,
 			// we have to add the Owning-Org as a desired org
 			if(!apiConfig.getClientOrganizations().contains(apiConfig.getOrganization())) {
 				apiConfig.getClientOrganizations().add(apiConfig.getOrganization());
 			}
 		}
 	}
-	
+
 	private void addQuotaConfiguration(IAPI apiConfig) throws AppException {
 		if(apiConfig.getState()==IAPI.STATE_UNPUBLISHED) return;
 		DesiredAPI importAPI = (DesiredAPI)apiConfig;
 		initQuota(importAPI.getSystemQuota());
 		initQuota(importAPI.getApplicationQuota());
 	}
-	
+
 	private void initQuota(APIQuota quotaConfig) {
 		if(quotaConfig==null) return;
 		if(quotaConfig.getType().equals("APPLICATION")) {
@@ -219,10 +231,10 @@ public class APIImportConfigAdapter {
 			quotaConfig.setDescription("Maximum message rates per application. Applied to each application unless an Application-Specific quota is configured");
 		} else {
 			quotaConfig.setName("System Default");
-			quotaConfig.setDescription(".....");			
+			quotaConfig.setDescription(".....");
 		}
 	}
-	
+
 	private void validateDescription(IAPI apiConfig) throws AppException {
 		// Some default handling
 		if(apiConfig.getDescriptionType()==null) ((DesiredAPI)apiConfig).setDescriptionType("original");
@@ -249,7 +261,7 @@ public class APIImportConfigAdapter {
 			throw new AppException("Unknown descriptionType: '"+descriptionType.equals("manual")+"'", ErrorCode.CANT_READ_CONFIG_FILE);
 		}
 	}
-	
+
 	private void validateCorsConfig(IAPI apiConfig) throws AppException {
 		if(apiConfig.getCorsProfiles()==null || apiConfig.getCorsProfiles().size()==0) return;
 		// Check if there is a default cors profile declared otherwise create one internally
@@ -272,12 +284,12 @@ public class APIImportConfigAdapter {
 			apiConfig.getCorsProfiles().add(defaultCors);
 		}
 	}
-	
+
 	/**
-	 * Purpose of this method is to load the actual existing applications from API-Manager 
-	 * based on the provided criteria (App-Name, API-Key, OAuth-ClientId or Ext-ClientId). 
+	 * Purpose of this method is to load the actual existing applications from API-Manager
+	 * based on the provided criteria (App-Name, API-Key, OAuth-ClientId or Ext-ClientId).
 	 * Or, if the APP doesn't exists remove it from the list and log a warning message.
-	 * Additionally, for each application it's check, that the organization has access 
+	 * Additionally, for each application it's check, that the organization has access
 	 * to this API, otherwise it will be removed from the list as well and a warning message is logged.
 	 * @param apiConfig
 	 * @throws AppException
@@ -305,25 +317,25 @@ public class APIImportConfigAdapter {
 					if(loadedApp==null) {
 						it.remove();
 						continue;
-					} 
+					}
 				} else if(app.getOauthClientId()!=null) {
 					loadedApp = getAppForCredential(app.getOauthClientId(), APIManagerAdapter.CREDENTIAL_TYPE_OAUTH);
 					if(loadedApp==null) {
 						it.remove();
 						continue;
-					} 
+					}
 				} else if(app.getExtClientId()!=null) {
 					loadedApp = getAppForCredential(app.getExtClientId(), APIManagerAdapter.CREDENTIAL_TYPE_EXT_CLIENTID);
 					if(loadedApp==null) {
 						it.remove();
 						continue;
-					} 
+					}
 				}
 				it.set(loadedApp); // Replace the incoming app, with the App loaded from API-Manager
 			}
 		}
 	}
-	
+
 	private static ClientApplication getAppForCredential(String credential, String type) throws AppException {
 		LOG.debug("Searching application with configured credential (Type: "+type+"): '"+credential+"'");
 		ClientApplication app = APIManagerAdapter.getInstance().getAppIdForCredential(credential, type);
@@ -333,7 +345,7 @@ public class APIImportConfigAdapter {
 		}
 		return app;
 	}
-	
+
 	private void completeCaCerts(IAPI apiConfig) throws AppException {
 		if(apiConfig.getCaCerts()!=null) {
 			List<CaCert> completedCaCerts = new ArrayList<CaCert>();
@@ -352,13 +364,13 @@ public class APIImportConfigAdapter {
 			apiConfig.getCaCerts().addAll(completedCaCerts);
 		}
 	}
-	
+
 	private InputStream getInputStreamForCertFile(CaCert cert) throws AppException {
 		InputStream is;
 		File file;
 		// Certificates might be stored somewhere else, so try to load them directly
 		file = new File(cert.getCertFile());
-		if(file.exists()) { 
+		if(file.exists()) {
 			try {
 				is = new FileInputStream(file);
 				return is;
@@ -374,7 +386,7 @@ public class APIImportConfigAdapter {
 			throw new AppException("Can't read certificate file.", ErrorCode.CANT_READ_CONFIG_FILE, e1);
 		}
 		file = new File(baseDir + File.separator + cert.getCertFile());
-		if(file.exists()) { 
+		if(file.exists()) {
 			try {
 				is = new FileInputStream(file);
 			} catch (FileNotFoundException e) {
@@ -383,7 +395,7 @@ public class APIImportConfigAdapter {
 		} else {
 			LOG.debug("Can't read certifiate from file-location: " + file.toString() + ". Now trying to read it from the classpath.");
 			// Try to read it from classpath
-			is = APIManagerAdapter.class.getResourceAsStream(cert.getCertFile()); 
+			is = APIManagerAdapter.class.getResourceAsStream(cert.getCertFile());
 		}
 		if(is==null) {
 			LOG.error("Can't read certificate: "+cert.getCertFile()+" from file or classpath.");
@@ -395,7 +407,7 @@ public class APIImportConfigAdapter {
 		}
 		return is;
 	}
-	
+
 	private void validateCustomProperties(IAPI apiConfig) throws AppException {
 		if(apiConfig.getCustomProperties()!=null) {
 			JsonNode configuredProps = APIManagerAdapter.getCustomPropertiesConfig();
@@ -426,7 +438,7 @@ public class APIImportConfigAdapter {
 			}
 		}
 	}
-	
+
 	private byte[] getAPIDefinitionContent() throws AppException {
 		try {
 			InputStream stream = getAPIDefinitionAsStream();
@@ -436,7 +448,7 @@ public class APIImportConfigAdapter {
 			throw new AppException("Can't read API-Definition from file", ErrorCode.CANT_READ_API_DEFINITION_FILE, e);
 		}
 	}
-	
+
 	/**
 	 * To make testing easier we allow reading test-files from classpath as well
 	 * @throws AppException when the import Swagger-File can't be read.
@@ -451,14 +463,14 @@ public class APIImportConfigAdapter {
 		} else {
 			try {
 				File inputFile = new File(pathToAPIDefinition);
-				if(inputFile.exists()) { 
+				if(inputFile.exists()) {
 					LOG.info("Reading API-Definition (Swagger/WSDL) from file: '" + pathToAPIDefinition + "' (relative path)");
 					is = new FileInputStream(pathToAPIDefinition);
 				} else {
 					String baseDir = new File(this.apiConfigFile).getCanonicalFile().getParent();
 					inputFile= new File(baseDir + File.separator + this.pathToAPIDefinition);
-					LOG.info("Reading API-Definition (Swagger/WSDL) from file: '" + inputFile.getCanonicalFile() + "' (absolute path)"); 
-					if(inputFile.exists()) { 
+					LOG.info("Reading API-Definition (Swagger/WSDL) from file: '" + inputFile.getCanonicalFile() + "' (absolute path)");
+					if(inputFile.exists()) {
 						is = new FileInputStream(inputFile);
 					} else {
 						is = this.getClass().getResourceAsStream(pathToAPIDefinition);
@@ -470,39 +482,31 @@ public class APIImportConfigAdapter {
 			} catch (Exception e) {
 				throw new AppException("Unable to read Swagger/WSDL file from: " + pathToAPIDefinition, ErrorCode.CANT_READ_API_DEFINITION_FILE, e);
 			}
-			
+
 		}
 		return is;
 	}
-	
+
 	private InputStream getAPIDefinitionFromURL(String urlToAPIDefinition) throws AppException {
-		String uri = null;
-		String username = null;
-		String password = null;
-		String[] temp = urlToAPIDefinition.split("@");
-		if(temp.length==1) {
-			uri = temp[0];
-		} else if(temp.length==2) {
-			username = temp[0].substring(0, temp[0].indexOf("/"));
-			password = temp[0].substring(temp[0].indexOf("/")+1);
-			uri = temp[1];
-		} else {
-			throw new AppException("API-Definition URL has an invalid format. ", ErrorCode.CANT_READ_API_DEFINITION_FILE);
-		}
+		URLParser url = new URLParser(urlToAPIDefinition);
+		String uri = url.getUri();
+		String username = url.getUsername();
+		String password = url.getPassword();
 		CloseableHttpClient httpclient = null;
 		try {
-			LOG.info("Loading API-Definition from: " + uri);
 			if(username!=null) {
+				LOG.info("Loading API-Definition from: " + uri + " ("+username+")");
 				CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				credsProvider.setCredentials(
 		                new AuthScope(AuthScope.ANY),
 		                new UsernamePasswordCredentials(username, password));
 				httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 			} else {
+				LOG.info("Loading API-Definition from: " + uri);
 				httpclient = HttpClients.createDefault();
 			}
 			HttpGet httpGet = new HttpGet(uri);
-			
+
             ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
 
                 @Override
@@ -528,12 +532,12 @@ public class APIImportConfigAdapter {
 			} catch (Exception ignore) {}
 		}
 	}
-	
+
 	public static boolean isHttpUri(String pathToAPIDefinition) {
 		String httpUri = pathToAPIDefinition.substring(pathToAPIDefinition.indexOf("@")+1);
 		return( httpUri.startsWith("http://") || httpUri.startsWith("https://"));
 	}
-	
+
 	private String getStageConfig(String stage, String apiConfig) {
 		if(stage == null) return null;
 		File stageFile = new File(stage);
@@ -546,7 +550,7 @@ public class APIImportConfigAdapter {
 		LOG.debug("No stage provided");
 		return null;
 	}
-	
+
 	private IAPI addDefaultPassthroughSecurityProfile(IAPI importApi) throws AppException {
 		if(importApi.getSecurityProfiles()==null || importApi.getSecurityProfiles().size()==0) {
 			SecurityProfile passthroughProfile = new SecurityProfile();
@@ -559,13 +563,13 @@ public class APIImportConfigAdapter {
 			passthroughDevice.getProperties().put("subjectIdFieldName", "Pass Through");
 			passthroughDevice.getProperties().put("removeCredentialsOnSuccess", "true");
 			passthroughProfile.getDevices().add(passthroughDevice);
-			
+
 			importApi.setSecurityProfiles(new ArrayList<SecurityProfile>());
 			importApi.getSecurityProfiles().add(passthroughProfile);
 		}
 		return importApi;
 	}
-	
+
 	private void validateOutboundAuthN(IAPI importApi) throws AppException {
 		// Request to use some specific Outbound-AuthN for this API
 		if(importApi.getAuthenticationProfiles()!=null && importApi.getAuthenticationProfiles().size()!=0) {
@@ -576,21 +580,48 @@ public class APIImportConfigAdapter {
 			importApi.getAuthenticationProfiles().get(0).setIsDefault(true);
 			importApi.getAuthenticationProfiles().get(0).setName("_default"); // Otherwise it wont be considered as default by the API-Mgr.
 		}
-		
+
 	}
-	
+
+	private void validateHasQueryStringKey(IAPI importApi) throws AppException {
+		if(APIManagerAdapter.getApiManagerVersion().startsWith("7.5")) return; // QueryStringRouting isn't supported
+		if(APIManagerAdapter.getInstance().hasAdminAccount()) {
+			String apiRoutingKeyEnabled = APIManagerAdapter.getApiManagerConfig("apiRoutingKeyEnabled");
+			if(apiRoutingKeyEnabled.equals("true")) {
+				if(importApi.getApiRoutingKey()==null) {
+					ErrorState.getInstance().setError("API-Manager configured for Query-String option, but API doesn' declare it.", ErrorCode.API_CONFIG_REQUIRES_QUERY_STRING, false);
+					throw new AppException("API-Manager configured for Query-String option, but API doesn' declare it.", ErrorCode.API_CONFIG_REQUIRES_QUERY_STRING);
+				}
+			}
+		} else {
+			LOG.debug("Can't check if QueryString for API is needed without Admin-Account.");
+		}
+	}
+
+
+
 	private IAPI addImageContent(IAPI importApi) throws AppException {
+		File file = null;
 		if(importApi.getImage()!=null) { // An image is declared
 			try {
-				String baseDir = new File(this.apiConfigFile).getParent();
-				File file = new File(baseDir + "/" + importApi.getImage().getFilename());
+				file = new File(importApi.getImage().getFilename());
+				if(!file.exists()) { // The image isn't provided with an absolute path, try to read it relativ to the config file
+					String baseDir = new File(this.apiConfigFile).getCanonicalFile().getParent();
+					file = new File(baseDir + "/" + importApi.getImage().getFilename());
+				}
 				importApi.getImage().setBaseFilename(file.getName());
-				if(file.exists()) { 
+				InputStream is = this.getClass().getResourceAsStream(importApi.getImage().getFilename());
+				if(file.exists()) {
+					LOG.debug("Loading image from: '"+file.getCanonicalFile()+"'");
 					importApi.getImage().setImageContent(IOUtils.toByteArray(new FileInputStream(file)));
-				} else {
+					return importApi;
+				} else if(is!=null) {
+					LOG.debug("Trying to load image from classpath");
 					// Try to read it from classpath
-					importApi.getImage().setImageContent(IOUtils.toByteArray(
-							this.getClass().getResourceAsStream(importApi.getImage().getFilename())));
+					importApi.getImage().setImageContent(IOUtils.toByteArray(is));
+					return importApi;
+				} else {
+					throw new AppException("Image not found in filesystem ('"+file+"') or Classpath.", ErrorCode.UNXPECTED_ERROR);
 				}
 			} catch (Exception e) {
 				throw new AppException("Can't read image-file: "+importApi.getImage().getFilename()+" from filesystem or classpath.", ErrorCode.UNXPECTED_ERROR, e);
@@ -606,6 +637,6 @@ public class APIImportConfigAdapter {
 	public void setPathToAPIDefinition(String pathToAPIDefinition) {
 		this.pathToAPIDefinition = pathToAPIDefinition;
 	}
-	
-	
+
+
 }

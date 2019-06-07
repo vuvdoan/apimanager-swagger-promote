@@ -30,24 +30,24 @@ import com.axway.apim.swagger.api.state.IAPI;
  * - next is to read the API-Contract by creating an <code>APIImportConfig</code> instance and calling getImportAPIDefinition()</br>
  * - the <code>APIManagerAdapter</code> method: <code>getAPIManagerAPI()</code> is used to create the API-Manager API state</br>
  * - An <code>APIChangeState</code> is created based on ImportAPI & API-Manager API
- * - Finally the APIManagerAdapter:applyChanges() is called to replicate the state into the APIManager.   
- * 
+ * - Finally the APIManagerAdapter:applyChanges() is called to replicate the state into the APIManager.
+ *
  * @author cwiechmann@axway.com
  */
 public class ImportApp {
 
 	private static Logger LOG = LoggerFactory.getLogger(ImportApp.class);
 
-	public static void main(String args[]) { 
+	public static void main(String args[]) {
 		int rc = run(args);
 		System.exit(rc);
 	}
-		
+
 	public static int run(String args[]) {
 		try {
 			Options options = new Options();
 			Option option;
-			
+
 			option = new Option("a", "apidefinition", true, "(Optional) The API Definition either as Swagger (JSON-Formated) or a WSDL for SOAP-Services:\n"
 					+ "- in local filesystem using a relative or absolute path. Example: swagger_file.json\n"
 					+ "  Please note: Local filesystem is not supported for WSDLs. Please use direct URL or a URL-Reference-File.\n"
@@ -60,52 +60,52 @@ public class ImportApp {
 				option.setRequired(false);
 				option.setArgName("swagger_file.json");
 			options.addOption(option);
-			
+
 			option = new Option("c", "contract", true, "This is the JSON-Formatted API-Config containing information how to expose the API");
 				option.setRequired(true);
 				option.setArgName("api_config.json");
 			options.addOption(option);
-			
+
 			option = new Option("s", "stage", true, "The stage this API should be imported.\n"
 					+ "Will be used to lookup stage specific API-Config overrides (e.g.: api_config.preprod.json)");
 				option.setArgName("preprod");
 			options.addOption(option);
-			
+
 			option = new Option("h", "host", true, "The API-Manager hostname the API should be imported");
 				option.setRequired(false);
 				option.setArgName("api-host");
 			options.addOption(option);
-			
+
 			option = new Option("port", true, "Optional parameter to declare the API-Manager port. Defaults to 8075.");
 			option.setArgName("8181");
 			options.addOption(option);
-			
+
 			option = new Option("u", "username", true, "Username used to authenticate. Please note, that this user must have Admin-Role");
 				option.setRequired(false);
 				option.setArgName("apiadmin");
 			options.addOption(option);
-			
+
 			option = new Option("p", "password", true, "Password used to authenticate");
 				option.setRequired(false);
 				option.setArgName("changeme");
 			options.addOption(option);
-			
+
 			option = new Option("f", "force", true, "Breaking changes can't be imported without this flag, unless the API is unpublished.");
 				option.setArgName("true/[false]");
 			options.addOption(option);
-			
+
 			option = new Option("iq", "ignoreQuotas", true, "Use this flag to ignore configured API quotas.");
 			option.setArgName("true/[false]");
 			options.addOption(option);
-			
-			option = new Option("clientOrgsMode", true, "Controls how configured Client-Organizations are treated. Defaults to replace!");
+
+			option = new Option("clientOrgsMode", true, "Controls how configured Client-Organizations are treated. Defaults to add!");
 			option.setArgName("ignore|replace|add");
 			options.addOption(option);
-			
-			option = new Option("clientAppsMode", true, "Controls how configured Client-Applications are treated. Defaults to replace!");
+
+			option = new Option("clientAppsMode", true, "Controls how configured Client-Applications are treated. Defaults to add!");
 			option.setArgName("ignore|replace|add");
-			options.addOption(option);	
-			
+			options.addOption(option);
+
 			Options internalOptions = new Options();
 			option = new Option("ignoreAdminAccount", true, "If set, the tool wont load the env.properties. This is used for testing only.");
 			option.setRequired(false);
@@ -120,13 +120,13 @@ public class ImportApp {
 			option = new  Option("h", "help", false, "Print the help");
 			option.setRequired(false);
 			internalOptions.addOption(option);
-			
-			
+
+
 			CommandLineParser parser = new RelaxedParser();
-			
+
 			CommandLine cmd = null;
 			CommandLine internalCmd = null;
-			
+
 			try {
 				cmd = parser.parse(options, args);
 				internalCmd = parser.parse( internalOptions, args);
@@ -134,12 +134,12 @@ public class ImportApp {
 				printUsage(options, e.getMessage());
 				System.exit(99);
 			}
-			
+
 			if(cmd.hasOption("help")) {
 				printUsage(options, "Usage information");
 				System.exit(0);
 			}
-			
+
 			LOG.info("------------------------------------------------------------------------");
 			LOG.info("API-Manager Promote Version: 1.5.0 - I M P O R T");
 			LOG.info("                                                                        ");
@@ -148,18 +148,18 @@ public class ImportApp {
 			LOG.info("N E W:");
 			LOG.info("Use Swagger-Export to export your existing APIs");
 			LOG.info("------------------------------------------------------------------------");
-			
+
 			// We need to clean some Singleton-Instances, as tests are running in the same JVM
 			APIManagerAdapter.deleteInstance();
 			ErrorState.deleteInstance();
 			APIMHttpClient.deleteInstance();
 			Transaction.deleteInstance();
-			
+
 			CommandParameters params = new CommandParameters(cmd, internalCmd, new EnvironmentProperties(cmd.getOptionValue("stage")));
-			
+
 			APIManagerAdapter apimAdapter = APIManagerAdapter.getInstance();
-			
-			APIImportConfigAdapter contract = new APIImportConfigAdapter(params.getOptionValue("contract"), 
+
+			APIImportConfigAdapter contract = new APIImportConfigAdapter(params.getOptionValue("contract"),
 					params.getOptionValue("stage"), params.getOptionValue("apidefinition"), apimAdapter.isUsingOrgAdmin());
 			IAPI desiredAPI = contract.getDesiredAPI();
 			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath()), desiredAPI);
@@ -183,13 +183,13 @@ public class ImportApp {
 			return ErrorCode.UNXPECTED_ERROR.getCode();
 		}
 	}
-	
+
 	private static void printUsage(Options options, String message) {
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.setWidth(140);
 		String scriptExt = "sh";
 		if(System.getProperty("os.name").toLowerCase().contains("win")) scriptExt = "bat";
-		
+
 		formatter.printHelp("Swagger-Import", options, true);
 		System.out.println("\n");
 		System.out.println("ERROR: " + message);

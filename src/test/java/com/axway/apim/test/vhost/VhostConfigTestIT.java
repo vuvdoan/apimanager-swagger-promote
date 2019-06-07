@@ -12,19 +12,19 @@ import com.consol.citrus.message.MessageType;
 
 @Test(testName="VhostConfigTest")
 public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
-	
+
 	@Autowired
 	private ImportTestAction swaggerImport;
-	
+
 	@CitrusTest(name = "VhostConfigTest")
 	public void run() {
 		description("Test a Request-Policy");
-		
+
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
-		variable("apiPath", "/api-key-test-${apiNumber}");
-		variable("apiName", "API Key Test ${apiNumber}");
-		variable("state", "unpublished");
-		
+		variable("apiPath", "/vhost-test-${apiNumber}");
+		variable("apiName", "VHost Test ${apiNumber}");
+		variable("status", "unpublished");
+
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
 		createVariable("state", "unpublished");
@@ -33,7 +33,7 @@ public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/vhost/1_vhost-config.json");
 		createVariable("expectedReturnCode", "87");
 		action(swaggerImport);
-		
+
 		// Search for the API anyway!
 		echo("####### Validate API: '${apiName}' on path: '${apiPath}' has correct settings #######");
 		http().client("apiManager")
@@ -50,7 +50,7 @@ public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
 			.validate("$.[?(@.path=='${apiPath}')].state", "unpublished")
 			.validate("$.[?(@.path=='${apiPath}')].vhost", null)
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId");
-		
+
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
 		createVariable("state", "published");
 		createVariable("vhost", "api123.customer.com");
@@ -58,7 +58,7 @@ public class VhostConfigTestIT extends TestNGCitrusTestDesigner {
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/vhost/1_vhost-config.json");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
-		
+
 		// Search for the API anyway!
 		echo("####### Validate API: '${apiName}' on path: '${apiPath}' has correct settings #######");
 		http().client("apiManager")

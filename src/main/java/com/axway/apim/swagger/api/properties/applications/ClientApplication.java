@@ -2,7 +2,7 @@ package com.axway.apim.swagger.api.properties.applications;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.fasterxml.jackson.annotation.JsonFilter;
+import com.axway.apim.swagger.api.properties.quota.APIQuota;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -15,9 +15,11 @@ public class ClientApplication {
 	private String oauthClientId;
 	private String extClientId;
 	private String apiKey;
-	
+
+	private APIQuota appQuota;
+
 	private String organizationId;
-	
+
 	public String getId() {
 		return id;
 	}
@@ -48,12 +50,19 @@ public class ClientApplication {
 	public void setApiKey(String apiKey) {
 		this.apiKey = apiKey;
 	}
-	
+
 	public String getOrganizationId() {
 		return organizationId;
 	}
 	public void setOrganizationId(String organizationId) {
 		this.organizationId = organizationId;
+	}
+
+	public APIQuota getAppQuota() {
+		return appQuota;
+	}
+	public void setAppQuota(APIQuota appQuota) {
+		this.appQuota = appQuota;
 	}
 	@Override
 	public boolean equals(Object other) {

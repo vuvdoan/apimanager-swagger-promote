@@ -12,19 +12,19 @@ import com.consol.citrus.message.MessageType;
 
 @Test(testName="RoutingPolicyTest")
 public class RoutingPolicyTestIT extends TestNGCitrusTestDesigner {
-	
+
 	@Autowired
 	private ImportTestAction swaggerImport;
-	
+
 	@CitrusTest(name = "RoutingPolicyTest")
 	public void run() {
 		description("Test a Routing-Policy");
-		
+
 		variable("apiNumber", RandomNumberFunction.getRandomNumber(3, true));
-		variable("apiPath", "/api-key-test-${apiNumber}");
-		variable("apiName", "API Key Test ${apiNumber}");
-		variable("state", "unpublished");
-		
+		variable("apiPath", "/routing-policy-test-${apiNumber}");
+		variable("apiName", "Routing Policy Test ${apiNumber}");
+		variable("status", "unpublished");
+
 
 		echo("####### Importing API: '${apiName}' on path: '${apiPath}' with following settings: #######");
 		createVariable("routePolicy", "Routing policy 1");
@@ -32,7 +32,7 @@ public class RoutingPolicyTestIT extends TestNGCitrusTestDesigner {
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/policies/1_routing-policy.json");
 		createVariable("expectedReturnCode", "0");
 		action(swaggerImport);
-		
+
 		echo("####### Validate API: '${apiName}' on path: '${apiPath}' has correct settings #######");
 		http().client("apiManager")
 			.send()
