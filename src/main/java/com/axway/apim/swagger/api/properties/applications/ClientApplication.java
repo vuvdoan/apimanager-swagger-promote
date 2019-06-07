@@ -3,6 +3,7 @@ package com.axway.apim.swagger.api.properties.applications;
 import org.apache.commons.lang.StringUtils;
 
 import com.axway.apim.swagger.api.properties.quota.APIQuota;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 

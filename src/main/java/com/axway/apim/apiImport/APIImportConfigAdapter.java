@@ -173,7 +173,7 @@ public class APIImportConfigAdapter {
 				error.setError("The given organization: '"+apiConfig.getOrganization()+"' is either unknown or hasn't the Development flag.", ErrorCode.UNKNOWN_ORGANIZATION, false);
 				throw new AppException("The given organization: '"+apiConfig.getOrganization()+"' is either unknown or hasn't the Development flag.", ErrorCode.UNKNOWN_ORGANIZATION);
 			}
-			apiConfig.setOrgId(desiredOrgId);
+			apiConfig.setOrganizationId(desiredOrgId);
 		}
 	}
 
