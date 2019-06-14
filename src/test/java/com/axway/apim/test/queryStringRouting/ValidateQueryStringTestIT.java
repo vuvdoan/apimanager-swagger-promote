@@ -51,7 +51,7 @@ public class ValidateQueryStringTestIT extends TestNGCitrusTestRunner {
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/basic/4_flexible-status-config.json");
 		createVariable("status", "unpublished");
 		createVariable("expectedReturnCode", "54"); // Must fail!
-		swaggerImport.doExecute(context);		
+		swaggerImport.doExecute(context);
 		
 		echo("####### Register an API with query string enabled #######");		
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
@@ -70,19 +70,21 @@ public class ValidateQueryStringTestIT extends TestNGCitrusTestRunner {
 			.validate("$.[?(@.path=='${apiPath}')].apiRoutingKey", "${apiRoutingKey}")
 			.extractFromPayload("$.[?(@.path=='${apiPath}')].id", "apiId"));
 		
+		echo("####### As the Query-Key is an Identifier, changing the query-key leads to a new API! #######");	
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/queryStringRouting/api_with_query_string.json");
 		createVariable("state", "published");
 		createVariable("apiRoutingKey", "routeKeyB");
 		swaggerImport.doExecute(context);
 		
-		echo("####### Has the routing key changed #######");
-		http(builder -> builder.client("apiManager").send().get("/proxies/${apiId}").name("api").header("Content-Type", "application/json"));
+		echo("####### Has a new API, with the same path, but different query-string being created? #######");
+		http(builder -> builder.client("apiManager").send().get("/proxies").name("api").header("Content-Type", "application/json"));
 		
 		http(builder -> builder.client("apiManager").receive().response(HttpStatus.OK).messageType(MessageType.JSON)
-			.validate("$.[?(@.id=='${apiId}')].name", "${apiName}")
-			.validate("$.[?(@.id=='${apiId}')].state", "${state}") // should be published now!
-			.validate("$.[?(@.id=='${apiId}')].apiRoutingKey", "${apiRoutingKey}")); // Changed to routeKeyB
+			.validate("$.[?(@.path=='${apiPath}')].name", "${apiName}")
+			.validate("$.[?(@.path=='${apiPath}')].state", "${state}") // This API is published
+			.validate("$.[?(@.path=='${apiPath}')].apiRoutingKey", "${apiRoutingKey}") // New API with routeKeyB
+			.validate("$.[?(@.path=='${apiPath}' && @.apiRoutingKey=='${apiRoutingKey}')].apiId", "@assertThat(not(containsString(${apiId})))@")); // Make sure, the old APIs is not Used - we need a new API
 		
 		echo("####### Perform a No-Change #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
@@ -110,7 +112,7 @@ public class ValidateQueryStringTestIT extends TestNGCitrusTestRunner {
 		createVariable("expectedReturnCode", "53"); // Must fail!
 		swaggerImport.doExecute(context);
 		
-		echo("####### Try to register an API with Query-String (using OrgAdminOnly) - Leads to a Warning-Message #######");
+		echo("####### Try to register an API with Query-String (using OrgAdminOnly) - Leads to a Warning-Message, but works1 #######");
 		createVariable(ImportTestAction.API_DEFINITION,  "/com/axway/apim/test/files/basic/petstore.json");
 		createVariable(ImportTestAction.API_CONFIG,  "/com/axway/apim/test/files/queryStringRouting/api_with_query_string.json");
 		createVariable("apiPath", "/query-string-api-oadmin-${apiNumber}");
