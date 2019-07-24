@@ -9,7 +9,7 @@ Watch this video (28 min): https://youtu.be/2i8i1zMAMps to get an overview + dem
 With that, an API-Developer is just providing the Swagger-File or WSDL (e.g. Code-Generated or using a Swagger-Editor) and the API-Config. When checked in, the CI/CD-Pipelines picks it up and replicates it into the API-Manager. 
 This includes __Zero-Downtime-Upgrade of existing applications__, which might have an active subscription to an API. Learn more in the [documentation](https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/wiki).
 
-![API-Manager Swagger-Promote overview]( https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/blob/master/src/lib/images/apimanager-swagger-promote-overview.png )
+![API-Manager Swagger-Promote overview]( https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/blob/develop/misc/images/apimanager-swagger-promote-overview.png )
 
 Today the following API-Properties are already supported and can be controlled externally:
 - State-Handling (Unpublished, Published, Deprecated & Deleted)
@@ -73,11 +73,12 @@ End-2-End-Tests simulate real world use cases by calling and validating API-Mana
   - Added compatibility for 7.6.2 SP3, App-Quota-Handling improved, Support for Query-String-Option
 - 1.5.3 - 01.07.2019
   - Now available in Maven-Central, API-Metadata export module, Outbound SSL support
+- 1.6.0 - 12.07.2019
+  - Added support for method level overrides, Rollback feature
 
 
 ## Limitations/Caveats
 - API-Method-Level description is not yet supported
-- __Method-Level__ settings such as individual Security, Custom-Policies, etc. not yet supported
 - Deep merge of stage-config files isn't supported
 - Support for WSDL is still Beta
 

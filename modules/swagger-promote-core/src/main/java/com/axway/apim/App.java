@@ -20,6 +20,7 @@ import com.axway.apim.lib.ErrorCode;
 import com.axway.apim.lib.ErrorState;
 import com.axway.apim.lib.APIPropertiesExport;
 import com.axway.apim.lib.RelaxedParser;
+import com.axway.apim.lib.rollback.RollbackHandler;
 import com.axway.apim.swagger.APIChangeState;
 import com.axway.apim.swagger.APIImportConfigAdapter;
 import com.axway.apim.swagger.APIManagerAdapter;
@@ -122,6 +123,11 @@ public class App {
 			option.setRequired(false);
 			option.setArgName("true");
 			internalOptions.addOption(option);
+			
+			option = new Option("rollback", true, "Allows to disable the rollback feature");
+			option.setRequired(false);
+			option.setArgName("true");
+			internalOptions.addOption(option);
 
 			option = new  Option("h", "help", false, "Print the help");
 			option.setRequired(false);
@@ -132,6 +138,14 @@ public class App {
 			
 			CommandLine cmd = null;
 			CommandLine internalCmd = null;
+			
+			System.out.println("------------------------------------------------------------------------");
+			System.out.println("API-Manager Promote Version: "+App.class.getPackage().getImplementationVersion());
+			System.out.println("                                                                        ");
+			System.out.println("To report issues or get help, please visit: ");
+			System.out.println("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote");
+			System.out.println("------------------------------------------------------------------------");
+			System.out.println("");
 			
 			try {
 				cmd = parser.parse(options, args);
@@ -146,27 +160,25 @@ public class App {
 				System.exit(0);
 			}
 			
-			LOG.info("------------------------------------------------------------------------");
-			LOG.info("API-Manager Promote Version: 1.5.3");
-			LOG.info("                                                                        ");
-			LOG.info("To report issues or get help, please visit: ");
-			LOG.info("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote");
-			LOG.info("------------------------------------------------------------------------");
-			
 			// We need to clean some Singleton-Instances, as tests are running in the same JVM
 			APIManagerAdapter.deleteInstance();
 			ErrorState.deleteInstance();
 			APIMHttpClient.deleteInstance();
 			Transaction.deleteInstance();
+			RollbackHandler.deleteInstance();
 			
 			CommandParameters params = new CommandParameters(cmd, internalCmd, new EnvironmentProperties(cmd.getOptionValue("stage")));
 			
 			APIManagerAdapter apimAdapter = APIManagerAdapter.getInstance();
 			
-			APIImportConfigAdapter contract = new APIImportConfigAdapter(params.getValue("contract"), 
+			APIImportConfigAdapter configAdapter = new APIImportConfigAdapter(params.getValue("contract"), 
 					params.getValue("stage"), params.getValue("apidefinition"), apimAdapter.isUsingOrgAdmin());
-			IAPI desiredAPI = contract.getDesiredAPI();
-			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath()), desiredAPI);
+			// Creates an API-Representation of the desired API
+			IAPI desiredAPI = configAdapter.getDesiredAPI();
+			// Lookup an existing APIs - If found the actualAPI is valid - desiredAPI is used to control what needs to be loaded
+			IAPI actualAPI = apimAdapter.getAPIManagerAPI(apimAdapter.getExistingAPI(desiredAPI.getPath(), null, APIManagerAdapter.TYPE_FRONT_END), desiredAPI);
+			// Based on the actual API - fulfill/complete some elements in the desired API
+			configAdapter.completeDesiredAPI(desiredAPI, actualAPI);
 			APIChangeState changeActions = new APIChangeState(actualAPI, desiredAPI);
 			apimAdapter.applyChanges(changeActions);
 			APIPropertiesExport.getInstance().store();
@@ -175,6 +187,10 @@ public class App {
 		} catch (AppException ap) {
 			APIPropertiesExport.getInstance().store(); // Try to create it, even 
 			ErrorState errorState = ErrorState.getInstance();
+			if(!ap.getErrorCode().equals(ErrorCode.NO_CHANGE)) {
+				RollbackHandler rollback = RollbackHandler.getInstance();
+				rollback.executeRollback();
+			}
 			if(errorState.hasError()) {
 				errorState.logErrorMessages(LOG);
 				if(errorState.isLogStackTrace()) LOG.error(ap.getMessage(), ap);
@@ -200,18 +216,16 @@ public class App {
 		System.out.println("ERROR: " + message);
 		System.out.println("\n");
 		System.out.println("You may run one of the following examples:");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/minimal-config.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/minimal-config.json -h localhost -u apiadmin -p changeme -s prod");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/complete-config.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/org-and-apps-config.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.url -c samples/minimal-config.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a https://petstore.swagger.io/v2/swagger.json -c samples/minimal-config.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a http://www.dneonline.com/calculator.asmx?wsdl -c samples/minimal-config-wsdl.json -h localhost -u apiadmin -p changeme");
-		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -c samples/minimal-config-wsdl-api-definition.json -h localhost -u apiadmin -p changeme");
+		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/basic/minimal-config.json -h localhost -u apiadmin -p changeme");
+		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/basic/minimal-config.json -h localhost -u apiadmin -p changeme -s prod");
+		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -a samples/petstore.json -c samples/complex/complete-config.json -h localhost -u apiadmin -p changeme");
+		System.out.println();
 		System.out.println();
 		System.out.println("Using parameters provided in properties file stored in conf-folder:");
 		System.out.println("scripts"+File.separator+"run-swagger-import."+scriptExt+" -c samples/minimal-config-api-definition.json -s api-env");
 		System.out.println();
-		System.out.println("For more information visit: https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/wiki");
+		System.out.println("For more information and advanced examples please visit:");
+		System.out.println("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/tree/develop/modules/swagger-promote-core/src/main/assembly/samples");
+		System.out.println("https://github.com/Axway-API-Management-Plus/apimanager-swagger-promote/wiki");
 	}
 }
